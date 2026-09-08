@@ -52,15 +52,15 @@
     @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 40px); } }
 
     header {
-      padding: clamp(30px, 5vh, 40px) 20px 15px;
-      background: rgba(7, 9, 19, 0.4);
+      padding: clamp(20px, 4vh, 30px) 20px 15px;
+      background: rgba(7, 9, 19, 0.6);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       position: sticky; top: 0; z-index: 10;
       border-bottom: 1px solid var(--glass-border);
       display: flex; justify-content: space-between; align-items: center;
     }
     header h2 {
-      margin: 0; font-size: clamp(18px, 4vw, 24px); font-weight: 800;
+      margin: 0; font-size: clamp(18px, 4vw, 22px); font-weight: 800;
       background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
@@ -92,37 +92,57 @@
       gap: 12px; margin-top: 16px;
     }
 
-    /* Карточка трека с поддержкой интерактивного статуса */
+    /* ФИКС ОБЛОЖЕК: Строгие размеры карточки */
     .track-card {
       display: flex; align-items: center; justify-content: space-between;
       background: var(--glass-bg); border: 1px solid var(--glass-border);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       padding: 10px 14px; border-radius: 18px; transition: all 0.2s;
+      height: 72px; box-sizing: border-box; overflow: hidden;
     }
     .track-card.playing {
       border-color: var(--neon-green);
       background: rgba(0, 255, 135, 0.08);
       box-shadow: 0 0 15px rgba(0, 255, 135, 0.15);
     }
-    .track-info { display: flex; align-items: center; gap: 12px; overflow: hidden; flex: 1; cursor: pointer; }
     
-    .cover-wrapper { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
-    .cover-img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
+    .cover-wrapper {
+      position: relative;
+      width: 48px; height: 48px;
+      min-width: 48px; min-height: 48px; max-width: 48px; max-height: 48px;
+      flex-shrink: 0; border-radius: 12px; overflow: hidden; cursor: pointer;
+    }
+    .cover-img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
     
-    /* Индикатор воспроизведения поверх обложки */
     .play-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.4);
-      border-radius: 12px; display: none; align-items: center; justify-content: center;
-      font-size: 18px; color: var(--neon-green);
+      position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+      display: none; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--neon-green); pointer-events: none;
     }
     .track-card.playing .play-overlay { display: flex; }
 
+    .track-info {
+      display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden; margin-right: 8px;
+    }
+    .track-text { display: flex; flex-direction: column; justify-content: center; overflow: hidden; flex: 1; cursor: pointer; }
     .track-title { font-weight: 600; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .track-artist { font-size: 12px; color: var(--text-sub); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
-    .badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 6px; text-transform: uppercase; color: var(--neon-cyan); }
+    .track-artist { font-size: 12px; color: var(--text-sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 6px; text-transform: uppercase; color: var(--neon-cyan); flex-shrink: 0; }
 
-    .icon-btn {
-      background: none; border: none; color: #fff; font-size: 18px; padding: 6px; cursor: pointer; opacity: 0.8;
+    .icon-btn { background: none; border: none; color: #fff; font-size: 18px; padding: 6px; cursor: pointer; opacity: 0.8; }
+
+    /* Модальное окно просмотра увеличенной обложки */
+    .image-modal {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px);
+      align-items: center; justify-content: center; cursor: pointer;
+      animation: fadeIn 0.2s ease;
+    }
+    .image-modal img {
+      max-width: 85vw; max-height: 70vh; border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 255, 135, 0.3); border: 1px solid var(--glass-border);
     }
 
     /* Плеер */
@@ -134,14 +154,11 @@
       backdrop-filter: blur(40px) saturate(180%);
       -webkit-backdrop-filter: blur(40px) saturate(180%);
       padding: 12px 20px; border-radius: 26px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-      z-index: 20;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); z-index: 20;
     }
 
-    .progress-container {
-      display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 6px;
-    }
-    .time-stamp { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+    .progress-container { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 6px; }
+    .time-stamp { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; }
     .seek-slider {
       flex: 1; -webkit-appearance: none; appearance: none;
       height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); outline: none; cursor: pointer;
@@ -149,14 +166,14 @@
     .seek-slider::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
       width: 12px; height: 12px; border-radius: 50%; background: var(--neon-green);
-      box-shadow: 0 0 10px var(--neon-green); cursor: pointer;
+      box-shadow: 0 0 10px var(--neon-green);
     }
 
     .player-controls { display: flex; justify-content: space-between; align-items: center; }
 
     nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 75px;
-      background: rgba(7, 9, 19, 0.6);
+      background: rgba(7, 9, 19, 0.7);
       backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
       border-top: 1px solid var(--glass-border);
       display: flex; justify-content: space-around; align-items: center;
@@ -172,12 +189,11 @@
       margin-top: 20px; padding: 15px; background: var(--glass-bg);
       border: 1px solid var(--glass-border); border-radius: 20px;
     }
-    .media-embed-box iframe { width: 100%; height: 200px; border: none; border-radius: 12px; }
+    .media-embed-box iframe { width: 100%; height: 210px; border: none; border-radius: 12px; }
 
     .modal {
       display: none; position: fixed; inset: 0; background: rgba(5, 8, 18, 0.92);
-      backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-      padding: 30px 20px; z-index: 100; overflow-y: auto; text-align: center;
+      backdrop-filter: blur(30px); padding: 30px 20px; z-index: 100; overflow-y: auto; text-align: center;
     }
   </style>
 </head>
@@ -190,39 +206,42 @@
 
   <header>
     <h2>Liquid Music</h2>
-    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Full Stream Engine</span>
+    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Universal Engine</span>
   </header>
 
+  <!-- Экран 1: Поиск -->
   <div id="screen-home" class="screen active">
     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-      <input type="text" id="searchInput" class="glass-input" placeholder="Любая песня в мире..." onkeyup="if(event.key==='Enter') autoSearchAll()">
+      <input type="text" id="searchInput" class="glass-input" placeholder="Поиск музыки (YouTube, VK, Мировые треки)..." onkeyup="if(event.key==='Enter') autoSearchAll()">
       <button class="btn-neon" style="width: 110px; margin: 0;" onclick="autoSearchAll()">Искать</button>
     </div>
 
     <div id="searchResults" class="grid-container"></div>
-    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Сканирование открытых аудиосетей...</div>
+    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Загрузка аудиопотока...</div>
 
     <div id="videoEmbeds" style="display:none;">
       <div class="media-embed-box">
-        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-cyan);">▶ Дополнительный плейлист VK / YouTube</div>
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-cyan);">▶ Музыкальный поток VK / YouTube</div>
         <div id="ytPlayer"></div>
       </div>
     </div>
   </div>
 
-  <div id="screen-library" class="screen">
+  <!-- Экран 2: Избранное (Переименовано) -->
+  <div id="screen-favorites" class="screen">
     <label class="btn-neon" style="display: block; text-align: center; cursor: pointer;">
-      📁 Загрузить свою песню с телефона
+      📁 Добавить локальную песню (.mp3)
       <input type="file" id="fileInput" accept="audio/*" style="display: none;" onchange="uploadLocalTrack(event)">
     </label>
 
-    <h4 style="margin-top:24px; color: var(--neon-cyan);">Мои локальные файлы</h4>
+    <h4 style="margin-top:24px; color: var(--neon-cyan);">Сохраненные файлы на устройстве</h4>
     <div id="localList" class="grid-container"></div>
 
     <h4 style="margin-top:24px; color: var(--neon-pink);">Избранные радиостанции</h4>
     <div id="favRadioList" class="grid-container"></div>
   </div>
 
+  <!-- Экран 3: Радио -->
   <div id="screen-radio" class="screen">
     <input type="text" id="cityInput" class="glass-input" placeholder="Введите город..." value="Москва">
     <button class="btn-neon" onclick="startRadioSearch()">Найти радиостанции</button>
@@ -230,6 +249,7 @@
     <div id="radioLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Загрузка радиостанций...</div>
   </div>
 
+  <!-- Экран 4: Опции -->
   <div id="screen-settings" class="screen">
     <h4 style="color: var(--neon-green);">Шаг перемотки</h4>
     <select id="skipStepSelect" class="glass-select" onchange="updateSettings()">
@@ -242,6 +262,12 @@
     <input type="range" id="sleepTimer" min="0" max="120" value="0" step="5" style="width:100%;" oninput="updateTimer(this.value)">
   </div>
 
+  <!-- Модальное окно просмотра обложки -->
+  <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <img id="modalImg" src="" alt="Cover Big">
+  </div>
+
+  <!-- Модальное окно текста -->
   <div id="lyricsModal" class="modal">
     <button onclick="closeLyrics()" class="btn-neon" style="width:auto; float:right; padding: 6px 16px;">✕</button>
     <h3 id="lyricsTitle" style="margin-top: 40px;">Текст песни</h3>
@@ -257,8 +283,10 @@
     </div>
 
     <div class="track-info">
-      <img id="playerCover" class="cover-img" src="https://via.placeholder.com/50/070913/ffffff?text=Music" alt="Cover">
-      <div>
+      <div class="cover-wrapper" onclick="openImageModal(document.getElementById('playerCover').src)">
+        <img id="playerCover" class="cover-img" src="https://via.placeholder.com/50/070913/ffffff?text=Music" alt="Cover">
+      </div>
+      <div class="track-text">
         <div id="playerTitle" class="track-title">Трек не выбран</div>
         <div id="playerArtist" class="track-artist">Полная версия</div>
       </div>
@@ -273,9 +301,10 @@
     </div>
   </div>
 
+  <!-- Навигация с переименованной вкладкой -->
   <nav>
     <button onclick="nav('home', this)" class="active"><span>🔍</span>Поиск</button>
-    <button onclick="nav('library', this)"><span>📁</span>Файлы</button>
+    <button onclick="nav('favorites', this)"><span>⭐</span>Избранное</button>
     <button onclick="nav('radio', this)"><span>📻</span>Радио</button>
     <button onclick="nav('settings', this)"><span>⚙️</span>Опции</button>
   </nav>
@@ -300,6 +329,7 @@
       "киев": "kiev", "минск": "minsk", "новосибирск": "novosibirsk", "екатеринбург": "ekaterinburg"
     };
 
+    // База данных для Избранного
     const req = indexedDB.open("LiquidMusicPWA", 2);
     req.onupgradeneeded = e => {
       const database = e.target.result;
@@ -318,7 +348,18 @@
       if (btn) btn.classList.add('active');
     }
 
-    // --- Автоматический Мульти-API Поиск Полноценных Треков ---
+    // --- Увеличение обложки ---
+    function openImageModal(src) {
+      if (!src || src.includes('placeholder')) return;
+      document.getElementById('modalImg').src = src;
+      document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    function closeImageModal() {
+      document.getElementById('imageModal').style.display = 'none';
+    }
+
+    // --- Поиск треков (Мульти-источник с обходом CORS и блокировок) ---
     async function autoSearchAll() {
       const q = document.getElementById('searchInput').value.trim();
       if (!q) return;
@@ -327,19 +368,18 @@
       document.getElementById('searchResults').innerHTML = '';
       document.getElementById('searchLoader').style.display = 'block';
 
+      // Генератор потока VK/YouTube
       document.getElementById('videoEmbeds').style.display = 'block';
       document.getElementById('ytPlayer').innerHTML = `
         <iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(q)}" allow="autoplay"></iframe>
       `;
 
-      // Ищем только в источниках, предоставляющих ПОЛНЫЕ версии
+      // Параллельный запрос к нескольким серверам обхода
       const fetchers = [
-        fetchInvidiousFullAudio(q), // Поиск полных мировых треков (Invidious / Piped API)
+        fetchPipedAudio(q),
+        fetchInvidiousAudio(q),
         fetchAudius(q),
-        fetchJamendo(q),
-        fetchArchiveOrg(q),
-        fetchFreeMusicArchive(q),
-        fetchCCMixter(q)
+        fetchJamendo(q)
       ];
 
       const results = await Promise.allSettled(fetchers);
@@ -353,28 +393,42 @@
       document.getElementById('searchLoader').style.display = 'none';
 
       if (playlist.length === 0) {
-        document.getElementById('searchResults').innerHTML = '<div style="color:var(--text-sub); grid-column:1/-1; text-align:center;">Ничего не найдено в открытых источниках.</div>';
+        document.getElementById('searchResults').innerHTML = '<div style="color:var(--text-sub); grid-column:1/-1; text-align:center;">Используйте плеер ниже для воспроизведения оригинального видео/аудио потока.</div>';
       } else {
         renderTrackCards(playlist, 'searchResults');
       }
     }
 
-    // Поисковый шлюз для оригинальных мировых аудиопотоков (Invidious Mirror Engine)
-    async function fetchInvidiousFullAudio(q) {
+    // Шлюз 1: Piped API Engine
+    async function fetchPipedAudio(q) {
+      try {
+        const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(q)}&filter=music_songs`);
+        const data = await res.json();
+        return (data.items || []).slice(0, 8).map(t => ({
+          id: 'pipe_' + t.url.split('v=')[1],
+          title: t.title,
+          artist: t.uploaderName || 'YouTube Full',
+          source: 'Original Track',
+          cover: t.thumbnail,
+          url: `https://pipedapi.kavin.rocks/streams/${t.url.split('v=')[1]}`
+        }));
+      } catch (e) { return []; }
+    }
+
+    // Шлюз 2: Invidious Audio Engine
+    async function fetchInvidiousAudio(q) {
       try {
         const res = await fetch(`https://invidious.nerdvpn.de/api/v1/search?q=${encodeURIComponent(q)}&type=video`);
         const data = await res.json();
-        return (data || []).slice(0, 10).map(t => ({
+        return (data || []).slice(0, 8).map(t => ({
           id: 'inv_' + t.videoId,
           title: t.title,
           artist: t.author,
-          source: 'Full Audio',
+          source: 'YouTube Music',
           cover: t.videoThumbnails?.[0]?.url || 'https://via.placeholder.com/50/00ff87/000000?text=HQ',
-          url: `https://invidious.nerdvpn.de/latest_version?id=${t.videoId}&itag=140` // Чистый поток 128kbps AAC
+          url: `https://invidious.nerdvpn.de/latest_version?id=${t.videoId}&itag=140`
         }));
-      } catch (e) {
-        return [];
-      }
+      } catch (e) { return []; }
     }
 
     async function fetchAudius(q) {
@@ -394,7 +448,7 @@
 
     async function fetchJamendo(q) {
       try {
-        const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${encodeURIComponent(q)}&limit=10`);
+        const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${encodeURIComponent(q)}&limit=8`);
         const data = await res.json();
         return (data.results || []).map(t => ({
           id: 'jamendo_' + t.id,
@@ -407,52 +461,7 @@
       } catch (e) { return []; }
     }
 
-    async function fetchArchiveOrg(q) {
-      try {
-        const res = await fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}+AND+mediatype:audio&fl[]=identifier,title,creator&rows=8&output=json`);
-        const data = await res.json();
-        return (data.response?.docs || []).map(t => ({
-          id: 'archive_' + t.identifier,
-          title: t.title || 'Unknown Title',
-          artist: t.creator || 'Archive.org',
-          source: 'Archive',
-          cover: 'https://archive.org/services/img/' + t.identifier,
-          url: `https://archive.org/download/${t.identifier}`
-        }));
-      } catch (e) { return []; }
-    }
-
-    async function fetchFreeMusicArchive(q) {
-      try {
-        const res = await fetch(`https://freemusicarchive.org/api/get/tracks.json?api_key=60KGTBCK1B6U599E&q=${encodeURIComponent(q)}&limit=5`);
-        const data = await res.json();
-        return (data.dataset || []).map(t => ({
-          id: 'fma_' + t.track_id,
-          title: t.track_title,
-          artist: t.artist_name,
-          source: 'FMA',
-          cover: 'https://via.placeholder.com/50/070913/ffffff?text=FMA',
-          url: t.track_file_url
-        }));
-      } catch (e) { return []; }
-    }
-
-    async function fetchCCMixter(q) {
-      try {
-        const res = await fetch(`https://ccmixter.org/api/query?tags=${encodeURIComponent(q)}&format=json`);
-        const data = await res.json();
-        return (data || []).slice(0, 5).map(t => ({
-          id: 'ccm_' + t.upload_id,
-          title: t.upload_name,
-          artist: t.user_name,
-          source: 'CCMixter',
-          cover: 'https://via.placeholder.com/50/60efff/000000?text=CC',
-          url: t.files?.[0]?.download_url
-        })).filter(t => t.url);
-      } catch (e) { return []; }
-    }
-
-    // Рендер карточек с подсветкой и управлением воспроизведением
+    // Рендер карточек
     function renderTrackCards(list, containerId) {
       const container = document.getElementById(containerId);
       list.forEach((t) => {
@@ -461,40 +470,36 @@
         card.className = 'track-card';
         card.id = 'card_' + t.id;
         card.innerHTML = `
-          <div class="track-info" onclick="handleTrackClick(${globalIdx}, '${t.id}')">
-            <div class="cover-wrapper">
+          <div class="track-info">
+            <div class="cover-wrapper" onclick="openImageModal('${t.cover}')">
               <img src="${t.cover}" class="cover-img" onerror="this.src='https://via.placeholder.com/50/070913/ffffff?text=Music'">
               <div class="play-overlay" id="overlay_${t.id}">⏸</div>
             </div>
-            <div>
+            <div class="track-text" onclick="handleTrackClick(${globalIdx}, '${t.id}')">
               <div class="track-title">${t.title}</div>
               <div class="track-artist">${t.artist} <span class="badge">${t.source}</span></div>
             </div>
           </div>
-          <button class="icon-btn" title="Только прослушивание" style="opacity:0.3; cursor:default;">🔒</button>
+          <button class="icon-btn" title="Только онлайн" style="opacity:0.3; cursor:default;">🔒</button>
         `;
         container.appendChild(card);
       });
     }
 
-    // Обработчик клика по карточке (Play / Pause прямо в карточке)
+    // Обработка Play/Pause в карточке
     function handleTrackClick(idx, trackId) {
       if (currentIndex === idx && !audio.paused) {
-        // Если уже играет эта песня — ставим на паузу
         audio.pause();
         updateUIPlayingState(false);
       } else if (currentIndex === idx && audio.paused) {
-        // Если стояла на паузе — возобновляем
         audio.play();
         updateUIPlayingState(true);
       } else {
-        // Запускаем новый трек
         playIndex(idx);
       }
     }
 
     function updateUIPlayingState(isPlaying) {
-      // Снимаем выделение со всех карточек
       document.querySelectorAll('.track-card').forEach(c => c.classList.remove('playing'));
       document.querySelectorAll('.play-overlay').forEach(o => o.innerText = '⏸');
 
@@ -513,7 +518,7 @@
       document.getElementById('playBtn').innerText = isPlaying ? '⏸' : '▶';
     }
 
-    // --- Локальные файлы и загрузка ---
+    // --- Локальные файлы (Избранное) ---
     function uploadLocalTrack(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -530,7 +535,7 @@
       const tx = db.transaction("tracks", "readwrite");
       tx.objectStore("tracks").put(trackData);
       tx.oncomplete = () => {
-        alert("Песня успешно сохранена на телефоне!");
+        alert("Песня добавлена в Избранное!");
         renderLocalTracks();
       };
     }
@@ -543,9 +548,11 @@
         const container = document.getElementById('localList');
         container.innerHTML = list.map(t => `
           <div class="track-card">
-            <div class="track-info" onclick="playLocalBlob('${t.id}')">
-              <img src="${t.cover}" class="cover-img">
-              <div>
+            <div class="track-info">
+              <div class="cover-wrapper" onclick="openImageModal('${t.cover}')">
+                <img src="${t.cover}" class="cover-img">
+              </div>
+              <div class="track-text" onclick="playLocalBlob('${t.id}')">
                 <div class="track-title">${t.title}</div>
                 <div class="track-artist">${t.artist}</div>
               </div>
@@ -593,7 +600,9 @@
           card.className = 'track-card';
           card.innerHTML = `
             <div class="track-info" onclick="playRadio('${r.url_resolved}', '${r.name}')">
-              <div class="track-title">${r.name}</div>
+              <div class="track-text">
+                <div class="track-title">${r.name}</div>
+              </div>
             </div>
             <button class="icon-btn" onclick="toggleFavRadio('${r.name}', '${r.url_resolved}')">❤️</button>
           `;
@@ -601,7 +610,6 @@
         });
         radioOffset += 20;
       } catch (e) {
-        console.error("Ошибка загрузки радио:", e);
       } finally {
         isRadioLoading = false;
         document.getElementById('radioLoader').style.display = 'none';
@@ -619,7 +627,9 @@
       document.getElementById('favRadioList').innerHTML = favRadio.map(r => `
         <div class="track-card" onclick="playRadio('${r.url}', '${r.name}')">
           <div class="track-info">
-            <div class="track-title">📻 ${r.name}</div>
+            <div class="track-text">
+              <div class="track-title">📻 ${r.name}</div>
+            </div>
           </div>
         </div>
       `).join('');
@@ -632,7 +642,7 @@
       updateUIPlayingState(true);
     }
 
-    // --- Плеер и Полоса Перемотки ---
+    // --- Управление плеером ---
     const audio = document.getElementById('audio');
     const seekSlider = document.getElementById('seekSlider');
     const currentTimeEl = document.getElementById('currentTime');
@@ -662,10 +672,22 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    function playIndex(idx) {
+    async function playIndex(idx) {
       currentIndex = idx;
       currentTrack = playlist[idx];
-      audio.src = currentTrack.url;
+      
+      let audioUrl = currentTrack.url;
+      // Если это Piped поток — получаем прямой аудиофайл
+      if (currentTrack.id.startsWith('pipe_')) {
+        try {
+          const res = await fetch(audioUrl);
+          const data = await res.json();
+          const audioStream = data.audioStreams?.find(s => s.quality === '160Kbps') || data.audioStreams?.[0];
+          if (audioStream) audioUrl = audioStream.url;
+        } catch(e) {}
+      }
+
+      audio.src = audioUrl;
       audio.play().catch(e => console.log("Ошибка воспроизведения:", e));
       document.getElementById('playerTitle').innerText = currentTrack.title;
       document.getElementById('playerArtist').innerText = currentTrack.artist;
@@ -702,9 +724,7 @@
       document.getElementById('timerVal').innerText = val;
       if (timerId) clearTimeout(timerId);
       if (val > 0) {
-        timerId = setTimeout(() => {
-          audio.pause();
-        }, val * 60 * 1000);
+        timerId = setTimeout(() => { audio.pause(); }, val * 60 * 1000);
       }
     }
 
