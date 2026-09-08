@@ -3,234 +3,225 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Neon Glass Music</title>
+  <title>Liquid Glass Music</title>
   
-  <!-- iOS PWA meta -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="NeonMusic">
+  <meta name="apple-mobile-web-app-title" content="LiquidMusic">
 
   <style>
     :root {
-      --bg-color: #0b0d17;
-      --glass-bg: rgba(255, 255, 255, 0.05);
-      --glass-border: rgba(255, 255, 255, 0.12);
-      --glass-blur: blur(25px);
+      --bg-color: #070913;
+      --glass-bg: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-blur: blur(30px);
       --neon-green: #00ff87;
       --neon-cyan: #60efff;
       --neon-pink: #ff007f;
       --text-main: #ffffff;
-      --text-sub: rgba(255, 255, 255, 0.6);
+      --text-sub: rgba(255, 255, 255, 0.55);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    /* Кастомная стильная полоса прокрутки */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      backdrop-filter: blur(5px);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
 
     body {
       background: var(--bg-color);
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      padding: 0 0 160px 0;
+      margin: 0; padding: 0 0 170px 0;
       min-height: 100vh;
       overflow-x: hidden;
       user-select: none;
     }
 
-    /* Динамический неоновый фон */
+    /* Живой неоновый фон */
     .glow-bg {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      z-index: -1;
-      overflow: hidden;
-      pointer-events: none;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: -1; pointer-events: none; overflow: hidden;
     }
-    .glow-ball-1 {
-      position: absolute; top: -10%; left: -10%; width: 350px; height: 350px;
-      background: radial-gradient(circle, rgba(0, 255, 135, 0.25), transparent 70%);
-      filter: blur(50px);
+    .glow-ball {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3;
+      animation: float 12s infinite alternate ease-in-out;
     }
-    .glow-ball-2 {
-      position: absolute; bottom: 10%; right: -10%; width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(255, 0, 127, 0.2), transparent 70%);
-      filter: blur(60px);
-    }
+    .ball-1 { top: -10%; left: -10%; width: 400px; height: 400px; background: var(--neon-green); }
+    .ball-2 { bottom: -10%; right: -10%; width: 450px; height: 450px; background: var(--neon-pink); animation-delay: -6s; }
+    @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 40px); } }
 
-    /* Шапка приложения */
     header {
-      padding: 50px 20px 15px;
-      background: rgba(11, 13, 23, 0.6);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
+      padding: clamp(30px, 5vh, 50px) 20px 15px;
+      background: rgba(7, 9, 19, 0.4);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       position: sticky; top: 0; z-index: 10;
       border-bottom: 1px solid var(--glass-border);
       display: flex; justify-content: space-between; align-items: center;
     }
     header h2 {
-      margin: 0; font-size: 22px; font-weight: 800;
+      margin: 0; font-size: clamp(18px, 4vw, 24px); font-weight: 800;
       background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 20px rgba(0, 255, 135, 0.3);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    /* Экраны */
-    .screen { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+    /* Адаптивные контейнеры */
+    .screen { display: none; padding: 20px; max-width: 900px; margin: 0 auto; animation: fadeIn 0.25s ease; }
     .screen.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Поля ввода в стиле матового стекла */
-    .glass-input {
+    .glass-input, .glass-select {
       width: 100%; padding: 14px 18px;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px; color: #fff;
-      font-size: 15px; outline: none;
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 16px; color: #fff; font-size: 15px; outline: none;
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      transition: all 0.3s;
     }
-    .glass-input:focus {
-      border-color: var(--neon-green);
-      box-shadow: 0 0 15px rgba(0, 255, 135, 0.2);
-    }
+    .glass-input:focus { border-color: var(--neon-green); box-shadow: 0 0 15px rgba(0, 255, 135, 0.2); }
 
-    /* Неоновые кнопки */
     .btn-neon {
       width: 100%; padding: 14px; margin-top: 12px;
       background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
-      border: none; border-radius: 16px;
-      color: #050b14; font-weight: 700; font-size: 15px;
-      cursor: pointer; box-shadow: 0 4px 20px rgba(0, 255, 135, 0.3);
-      transition: transform 0.2s;
+      border: none; border-radius: 16px; color: #040810; font-weight: 700; font-size: 15px;
+      cursor: pointer; box-shadow: 0 4px 20px rgba(0, 255, 135, 0.25);
     }
-    .btn-neon:active { transform: scale(0.97); }
+    .btn-neon:active { transform: scale(0.98); }
 
-    /* Карточки треков */
+    /* Адаптивная сетка списков */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+
     .track-card {
       display: flex; align-items: center; justify-content: space-between;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      padding: 10px 14px; margin-bottom: 12px; border-radius: 18px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      padding: 10px 14px; border-radius: 18px; transition: background 0.2s;
     }
-    .track-info { display: flex; align-items: center; gap: 14px; overflow: hidden; flex: 1; }
-    .cover-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .track-card:hover { background: rgba(255, 255, 255, 0.08); }
+    .track-info { display: flex; align-items: center; gap: 12px; overflow: hidden; flex: 1; cursor: pointer; }
+    .cover-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; }
     .track-title { font-weight: 600; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-artist { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 
-    /* Кнопки действий внутри карточки */
     .icon-btn {
-      background: none; border: none; color: #fff;
-      font-size: 18px; padding: 8px; cursor: pointer; opacity: 0.8;
-      transition: all 0.2s;
+      background: none; border: none; color: #fff; font-size: 18px; padding: 6px; cursor: pointer; opacity: 0.8;
     }
-    .icon-btn:active { transform: scale(1.2); color: var(--neon-green); }
 
-    /* Нижний стеклянный плеер */
+    /* Ультра-прозрачный Liquid Glass Плеер */
     .player-bar {
-      position: fixed; bottom: 85px; left: 15px; right: 15px;
-      background: rgba(20, 24, 40, 0.75);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      padding: 12px 16px; border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2);
+      position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
+      width: min(92%, 850px);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      padding: 12px 20px; border-radius: 26px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);
       z-index: 20;
     }
-    .player-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .player-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
 
-    /* Нижняя навигация */
+    /* Навигационная панель */
     nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 75px;
-      background: rgba(11, 13, 23, 0.8);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+      background: rgba(7, 9, 19, 0.6);
+      backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
       border-top: 1px solid var(--glass-border);
       display: flex; justify-content: space-around; align-items: center;
       z-index: 30; padding-bottom: 10px;
     }
     nav button {
       background: none; border: none; color: var(--text-sub);
-      font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      transition: all 0.3s;
+      font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
     }
-    nav button.active {
-      color: var(--neon-green);
-      text-shadow: 0 0 10px rgba(0, 255, 135, 0.5);
-    }
+    nav button.active { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 135, 0.4); }
 
-    /* Модальное окно текстов песен */
+    /* Встроенный видеоплеер для YouTube/VK */
+    #embedContainer {
+      display: none; width: 100%; height: 200px; margin-top: 12px; border-radius: 16px; overflow: hidden;
+    }
+    #embedContainer iframe { width: 100%; height: 100%; border: none; }
+
     .modal {
-      display: none; position: fixed; inset: 0;
-      background: rgba(5, 8, 18, 0.9);
+      display: none; position: fixed; inset: 0; background: rgba(5, 8, 18, 0.92);
       backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
       padding: 30px 20px; z-index: 100; overflow-y: auto; text-align: center;
-    }
-
-    /* Кастомный ползунок управления */
-    input[type=range] {
-      -webkit-appearance: none; width: 100%; background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%;
-      background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green);
     }
   </style>
 </head>
 <body>
 
-  <!-- Фновые свечения -->
   <div class="glow-bg">
-    <div class="glow-ball-1"></div>
-    <div class="glow-ball-2"></div>
+    <div class="glow-ball ball-1"></div>
+    <div class="glow-ball ball-2"></div>
   </div>
 
   <header>
-    <h2 id="appTitle">Neon Music</h2>
-    <span style="font-size: 11px; padding: 4px 10px; background: rgba(255,255,255,0.08); border-radius: 12px; border: 1px solid var(--glass-border);">Glass Edition</span>
+    <h2>Liquid Music</h2>
+    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Infinite Edition</span>
   </header>
 
   <!-- Экран 1: Поиск -->
   <div id="screen-home" class="screen active">
-    <input type="text" id="searchInput" class="glass-input" placeholder="Поиск треков..." onkeyup="if(event.key==='Enter') searchMusic()">
-    <div id="searchResults" style="margin-top: 16px;"></div>
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <input type="text" id="searchInput" class="glass-input" placeholder="Поиск песни..." onkeyup="if(event.key==='Enter') startSearch()">
+      <select id="sourceSelect" class="glass-select" style="width: 140px;" onchange="startSearch()">
+        <option value="audius">Audius</option>
+        <option value="jamendo">Jamendo</option>
+        <option value="youtube">YouTube</option>
+        <option value="vk">VK Music</option>
+      </select>
+    </div>
+
+    <!-- Встраиваемый плеер для видео (YouTube / VK) -->
+    <div id="embedContainer"></div>
+
+    <div id="searchResults" class="grid-container"></div>
+    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Загрузка новых треков...</div>
   </div>
 
-  <!-- Экран 2: Медиатека -->
+  <!-- Экран 2: Загрузка и Медиатека -->
   <div id="screen-library" class="screen">
-    <button class="btn-neon" onclick="createAlbum()">+ Создать новый альбом</button>
-    <h4 style="margin-top:24px; color: var(--neon-cyan);">Избранное</h4>
-    <div id="favList"></div>
-    <h4 style="margin-top:24px; color: var(--neon-pink);">Мои Альбомы</h4>
-    <div id="albumsList"></div>
+    <label class="btn-neon" style="display: block; text-align: center; cursor: pointer;">
+      📁 Загрузить свою песню с телефона
+      <input type="file" id="fileInput" accept="audio/*" style="display: none;" onchange="uploadLocalTrack(event)">
+    </label>
+
+    <h4 style="margin-top:24px; color: var(--neon-cyan);">Скачанные и локальные файлы</h4>
+    <div id="localList" class="grid-container"></div>
+
+    <h4 style="margin-top:24px; color: var(--neon-pink);">Избранные радиостанции</h4>
+    <div id="favRadioList" class="grid-container"></div>
   </div>
 
   <!-- Экран 3: Радио -->
   <div id="screen-radio" class="screen">
-    <input type="text" id="cityInput" class="glass-input" placeholder="Город (например, Moscow)" value="Moscow">
-    <button class="btn-neon" onclick="loadRadio()">Найти FM станции</button>
-    <div id="radioList" style="margin-top: 20px;"></div>
+    <input type="text" id="cityInput" class="glass-input" placeholder="Введите город (на рус или англ)..." value="Москва">
+    <button class="btn-neon" onclick="startRadioSearch()">Найти радиостанции</button>
+    <div id="radioResults" class="grid-container"></div>
+    <div id="radioLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Загрузка радиостанций...</div>
   </div>
 
-  <!-- Экран 4: Настройки -->
+  <!-- Экран 4: Опции -->
   <div id="screen-settings" class="screen">
     <h4 style="color: var(--neon-green);">Шаг перемотки</h4>
-    <select id="skipStepSelect" class="glass-input" onchange="updateSettings()">
+    <select id="skipStepSelect" class="glass-select" onchange="updateSettings()">
       <option value="5">5 секунд</option>
       <option value="10">10 секунд</option>
       <option value="15">15 секунд</option>
     </select>
 
     <h4 style="margin-top:30px; color: var(--neon-cyan);">Таймер сна: <span id="timerVal">0</span> мин</h4>
-    <input type="range" id="sleepTimer" min="0" max="120" value="0" step="5" oninput="updateTimer(this.value)">
-  </div>
-
-  <!-- Экран 5: Оффлайн -->
-  <div id="screen-offline" class="screen">
-    <h4 style="color: var(--neon-pink);">Скачанные треки (Без интернета)</h4>
-    <div id="offlineList"></div>
+    <input type="range" id="sleepTimer" min="0" max="120" value="0" step="5" style="width:100%;" oninput="updateTimer(this.value)">
   </div>
 
   <!-- Текст песни -->
@@ -243,7 +234,7 @@
   <!-- Плеер -->
   <div class="player-bar">
     <div class="track-info">
-      <img id="playerCover" class="cover-img" src="https://via.placeholder.com/50/0b0d17/ffffff?text=Music" alt="Cover">
+      <img id="playerCover" class="cover-img" src="https://via.placeholder.com/50/070913/ffffff?text=Music" alt="Cover">
       <div>
         <div id="playerTitle" class="track-title">Трек не выбран</div>
         <div id="playerArtist" class="track-artist">Выберите песню</div>
@@ -256,17 +247,14 @@
       <button class="icon-btn" onclick="togglePlay()" id="playBtn" style="font-size: 24px; color: var(--neon-green);">▶</button>
       <button class="icon-btn" onclick="forward()">⏩</button>
       <button class="icon-btn" onclick="nextTrack()">⏭</button>
-      <button class="icon-btn" onclick="toggleFav()">❤️</button>
     </div>
   </div>
 
-  <!-- Навигация -->
   <nav>
     <button onclick="nav('home', this)" class="active"><span>🔍</span>Поиск</button>
-    <button onclick="nav('library', this)"><span>📚</span>Коллекция</button>
+    <button onclick="nav('library', this)"><span>📁</span>Файлы</button>
     <button onclick="nav('radio', this)"><span>📻</span>Радио</button>
     <button onclick="nav('settings', this)"><span>⚙️</span>Опции</button>
-    <button onclick="nav('offline', this)"><span>⚡</span>Оффлайн</button>
   </nav>
 
   <audio id="audio"></audio>
@@ -278,64 +266,260 @@
     let currentIndex = -1;
     let timerId = null;
 
-    let settings = JSON.parse(localStorage.getItem('appSettings')) || { skipStep: 5 };
-    let favorites = JSON.parse(localStorage.getItem('favs')) || [];
-    let albums = JSON.parse(localStorage.getItem('albums')) || {};
+    // Пагинация и статус загрузки
+    let searchOffset = 0;
+    let isSearching = false;
+    let currentQuery = '';
+    let radioOffset = 0;
+    let isRadioLoading = false;
 
-    // Инициализация базы IndexedDB
-    const req = indexedDB.open("NeonMusicPWA", 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore("tracks", { keyPath: "id" });
-    req.onsuccess = e => { db = e.target.result; renderOffline(); };
+    let settings = JSON.parse(localStorage.getItem('appSettings')) || { skipStep: 5 };
+    let favRadio = JSON.parse(localStorage.getItem('favRadio')) || [];
+
+    // Словарь перевода популярных городов для двухязычного поиска радио
+    const cityTranslations = {
+      "москва": "moscow", "санкт-петербург": "saint petersburg", "питер": "saint petersburg",
+      "киев": "kiev", "минск": "minsk", "новосибирск": "novosibirsk", "екатеринбург": "ekaterinburg"
+    };
+
+    // Инициализация IndexedDB
+    const req = indexedDB.open("LiquidMusicPWA", 2);
+    req.onupgradeneeded = e => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains("tracks")) {
+        database.createObjectStore("tracks", { keyPath: "id" });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; renderLocalTracks(); };
 
     window.addEventListener('load', () => {
-      document.getElementById('skipStepSelect').value = settings.skipStep;
-      if (!navigator.onLine) { nav('offline', document.querySelectorAll('nav button')[4]); }
-      renderFavs();
-      renderAlbums();
+      renderFavRadio();
     });
 
     function nav(screenId, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.getElementById('screen-' + screenId).classList.add('active');
-      if(btn) btn.classList.add('active');
+      if (btn) btn.classList.add('active');
     }
 
-    // Поиск треков
-    async function searchMusic() {
-      const q = document.getElementById('searchInput').value;
-      if (!q) return;
-      const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${q}&app_name=NEON`);
-      const data = await res.json();
-      playlist = data.data.map(t => ({
-        id: t.id,
-        title: t.title,
-        artist: t.user.name,
-        cover: t.artwork['150x150'] || 'https://via.placeholder.com/50/0b0d17/ffffff?text=Music',
-        url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=NEON`
-      }));
-      renderPlaylist(playlist, 'searchResults');
+    // --- Бесконечный Поиск Треков ---
+    function startSearch() {
+      currentQuery = document.getElementById('searchInput').value;
+      if (!currentQuery) return;
+      searchOffset = 0;
+      playlist = [];
+      document.getElementById('searchResults').innerHTML = '';
+      document.getElementById('embedContainer').style.display = 'none';
+      fetchMoreTracks();
     }
 
-    function renderPlaylist(list, targetId) {
-      const el = document.getElementById(targetId);
-      el.innerHTML = list.map((t, idx) => `
-        <div class="track-card">
-          <div class="track-info" onclick="playIndex(${idx})">
+    async function fetchMoreTracks() {
+      if (isSearching) return;
+      isSearching = true;
+      document.getElementById('searchLoader').style.display = 'block';
+
+      const source = document.getElementById('sourceSelect').value;
+
+      try {
+        if (source === 'audius') {
+          const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${currentQuery}&offset=${searchOffset}&limit=20&app_name=LIQUID`);
+          const data = await res.json();
+          const newTracks = data.data.map(t => ({
+            id: 'audius_' + t.id,
+            title: t.title,
+            artist: t.user.name,
+            cover: t.artwork['150x150'] || 'https://via.placeholder.com/50/070913/ffffff?text=Audius',
+            url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=LIQUID`
+          }));
+          playlist.push(...newTracks);
+          renderTrackCards(newTracks, 'searchResults');
+          searchOffset += 20;
+        } else if (source === 'jamendo') {
+          const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${currentQuery}&offset=${searchOffset}&limit=20`);
+          const data = await res.json();
+          const newTracks = data.results.map(t => ({
+            id: 'jamendo_' + t.id,
+            title: t.name,
+            artist: t.artist_name,
+            cover: t.image || 'https://via.placeholder.com/50/070913/ffffff?text=Jamendo',
+            url: t.audio
+          }));
+          playlist.push(...newTracks);
+          renderTrackCards(newTracks, 'searchResults');
+          searchOffset += 20;
+        } else if (source === 'youtube') {
+          // Эмбед плеер для YouTube прослушивания
+          document.getElementById('embedContainer').style.display = 'block';
+          document.getElementById('embedContainer').innerHTML = `
+            <iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(currentQuery)}" allow="autoplay"></iframe>
+          `;
+        } else if (source === 'vk') {
+          // Поисковый виджет VK
+          document.getElementById('embedContainer').style.display = 'block';
+          document.getElementById('embedContainer').innerHTML = `
+            <iframe src="https://vk.com/widget_community.php?act=a_search&q=${encodeURIComponent(currentQuery)}" allow="autoplay"></iframe>
+          `;
+        }
+      } catch (e) {
+        console.error("Ошибка загрузки:", e);
+      } finally {
+        isSearching = false;
+        document.getElementById('searchLoader').style.display = 'none';
+      }
+    }
+
+    // Слушатель бесконечной прокрутки экрана
+    window.addEventListener('scroll', () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 400) {
+        if (document.getElementById('screen-home').classList.contains('active') && currentQuery) {
+          fetchMoreTracks();
+        } else if (document.getElementById('screen-radio').classList.contains('active')) {
+          fetchMoreRadio();
+        }
+      }
+    });
+
+    function renderTrackCards(list, containerId) {
+      const container = document.getElementById(containerId);
+      list.forEach((t) => {
+        const globalIdx = playlist.findIndex(p => p.id === t.id);
+        const card = document.createElement('div');
+        card.className = 'track-card';
+        card.innerHTML = `
+          <div class="track-info" onclick="playIndex(${globalIdx})">
             <img src="${t.cover}" class="cover-img">
             <div>
               <div class="track-title">${t.title}</div>
               <div class="track-artist">${t.artist}</div>
             </div>
           </div>
-          <div>
-            <button class="icon-btn" onclick="downloadTrack('${t.id}')">⬇️</button>
+          <button class="icon-btn" onclick="saveToOffline('${t.id}')">⬇️</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- Загрузка своих песен с телефона ---
+    function uploadLocalTrack(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const trackId = 'local_' + Date.now();
+      const trackData = {
+        id: trackId,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        artist: "Мое устройство",
+        cover: "https://via.placeholder.com/50/070913/ffffff?text=MP3",
+        blob: file
+      };
+
+      const tx = db.transaction("tracks", "readwrite");
+      tx.objectStore("tracks").put(trackData);
+      tx.oncomplete = () => {
+        alert("Песня сохранена!");
+        renderLocalTracks();
+      };
+    }
+
+    function renderLocalTracks() {
+      if (!db) return;
+      const tx = db.transaction("tracks", "readonly");
+      tx.objectStore("tracks").getAll().onsuccess = e => {
+        const list = e.target.result;
+        const container = document.getElementById('localList');
+        container.innerHTML = list.map(t => `
+          <div class="track-card">
+            <div class="track-info" onclick="playLocalBlob('${t.id}')">
+              <img src="${t.cover}" class="cover-img">
+              <div>
+                <div class="track-title">${t.title}</div>
+                <div class="track-artist">${t.artist}</div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      };
+    }
+
+    function playLocalBlob(id) {
+      const tx = db.transaction("tracks", "readonly");
+      tx.objectStore("tracks").get(id).onsuccess = e => {
+        const t = e.target.result;
+        audio.src = URL.createObjectURL(t.blob);
+        audio.play();
+        document.getElementById('playerTitle').innerText = t.title;
+        document.getElementById('playerArtist').innerText = t.artist;
+        document.getElementById('playerCover').src = t.cover;
+        document.getElementById('playBtn').innerText = '⏸';
+      };
+    }
+
+    // --- Двуязычный Поиск Радио + Избранное ---
+    function startRadioSearch() {
+      radioOffset = 0;
+      document.getElementById('radioResults').innerHTML = '';
+      fetchMoreRadio();
+    }
+
+    async function fetchMoreRadio() {
+      if (isRadioLoading) return;
+      isRadioLoading = true;
+      document.getElementById('radioLoader').style.display = 'block';
+
+      let inputCity = document.getElementById('cityInput').value.trim().toLowerCase();
+      let queryCity = cityTranslations[inputCity] || inputCity;
+
+      try {
+        const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(queryCity)}?offset=${radioOffset}&limit=20`);
+        const stations = await res.json();
+        
+        const container = document.getElementById('radioResults');
+        stations.forEach(r => {
+          const card = document.createElement('div');
+          card.className = 'track-card';
+          card.innerHTML = `
+            <div class="track-info" onclick="playRadio('${r.url_resolved}', '${r.name}')">
+              <div class="track-title">${r.name}</div>
+            </div>
+            <button class="icon-btn" onclick="toggleFavRadio('${r.name}', '${r.url_resolved}')">❤️</button>
+          `;
+          container.appendChild(card);
+        });
+        radioOffset += 20;
+      } catch (e) {
+        console.error("Ошибка загрузки радио:", e);
+      } finally {
+        isRadioLoading = false;
+        document.getElementById('radioLoader').style.display = 'none';
+      }
+    }
+
+    function toggleFavRadio(name, url) {
+      favRadio.push({ name, url });
+      localStorage.setItem('favRadio', JSON.stringify(favRadio));
+      renderFavRadio();
+      alert("Радиостанция добавлена в избранное!");
+    }
+
+    function renderFavRadio() {
+      document.getElementById('favRadioList').innerHTML = favRadio.map(r => `
+        <div class="track-card" onclick="playRadio('${r.url}', '${r.name}')">
+          <div class="track-info">
+            <div class="track-title">📻 ${r.name}</div>
           </div>
         </div>
       `).join('');
     }
 
-    // Воспроизведение
+    function playRadio(url, name) {
+      audio.src = url; audio.play();
+      document.getElementById('playerTitle').innerText = name;
+      document.getElementById('playerArtist').innerText = "Прямой эфир (Радио)";
+      document.getElementById('playBtn').innerText = '⏸';
+    }
+
+    // --- Плеер и Управление ---
     const audio = document.getElementById('audio');
     function playIndex(idx) {
       currentIndex = idx;
@@ -346,13 +530,6 @@
       document.getElementById('playerArtist').innerText = currentTrack.artist;
       document.getElementById('playerCover').src = currentTrack.cover;
       document.getElementById('playBtn').innerText = '⏸';
-
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: currentTrack.title, artist: currentTrack.artist,
-          artwork: [{ src: currentTrack.cover, sizes: '150x150', type: 'image/jpeg' }]
-        });
-      }
     }
 
     function togglePlay() {
@@ -365,7 +542,7 @@
     function nextTrack() { if (currentIndex < playlist.length - 1) playIndex(currentIndex + 1); }
     function prevTrack() { if (currentIndex > 0) playIndex(currentIndex - 1); }
 
-    // Текст песни
+    // --- Текст песни ---
     async function showLyrics() {
       if (!currentTrack) return;
       document.getElementById('lyricsModal').style.display = 'block';
@@ -381,65 +558,7 @@
     }
     function closeLyrics() { document.getElementById('lyricsModal').style.display = 'none'; }
 
-    // Сохранение в оффлайн
-    async function downloadTrack(id) {
-      const track = playlist.find(t => t.id === id);
-      const res = await fetch(track.url);
-      const blob = await res.blob();
-      const tx = db.transaction("tracks", "readwrite");
-      tx.objectStore("tracks").put({ ...track, blob: blob });
-      alert("Загружено в оффлайн!");
-      renderOffline();
-    }
-
-    function renderOffline() {
-      if (!db) return;
-      const tx = db.transaction("tracks", "readonly");
-      tx.objectStore("tracks").getAll().onsuccess = e => {
-        const list = e.target.result;
-        document.getElementById('offlineList').innerHTML = list.map(t => `
-          <div class="track-card" onclick="playBlob('${t.id}')">
-            <div class="track-info">
-              <img src="${t.cover}" class="cover-img">
-              <div><div class="track-title">${t.title}</div><div class="track-artist">${t.artist}</div></div>
-            </div>
-          </div>
-        `).join('');
-      };
-    }
-
-    function playBlob(id) {
-      const tx = db.transaction("tracks", "readonly");
-      tx.objectStore("tracks").get(id).onsuccess = e => {
-        const t = e.target.result;
-        audio.src = URL.createObjectURL(t.blob);
-        audio.play();
-        document.getElementById('playerTitle').innerText = t.title;
-        document.getElementById('playerArtist').innerText = t.artist;
-        document.getElementById('playerCover').src = t.cover;
-      };
-    }
-
-    // Радио
-    async function loadRadio() {
-      const city = document.getElementById('cityInput').value;
-      const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${city}`);
-      const data = await res.json();
-      document.getElementById('radioList').innerHTML = data.slice(0, 15).map(r => `
-        <div class="track-card" onclick="playRadio('${r.url_resolved}', '${r.name}')">
-          <div class="track-info">
-            <div class="track-title">${r.name}</div>
-          </div>
-        </div>
-      `).join('');
-    }
-    function playRadio(url, name) {
-      audio.src = url; audio.play();
-      document.getElementById('playerTitle').innerText = name;
-      document.getElementById('playerArtist').innerText = "Прямой эфир (Радио)";
-    }
-
-    // Таймер сна
+    // --- Таймер сна ---
     function updateTimer(val) {
       document.getElementById('timerVal').innerText = val;
       if (timerId) clearTimeout(timerId);
@@ -454,28 +573,6 @@
     function updateSettings() {
       settings.skipStep = document.getElementById('skipStepSelect').value;
       localStorage.setItem('appSettings', JSON.stringify(settings));
-    }
-
-    // Альбомы и Избранное
-    function toggleFav() {
-      if (!currentTrack) return;
-      favorites.push(currentTrack);
-      localStorage.setItem('favs', JSON.stringify(favorites));
-      renderFavs();
-    }
-    function renderFavs() {
-      document.getElementById('favList').innerHTML = favorites.map(t => `<div class="track-card"><div class="track-title">${t.title}</div></div>`).join('');
-    }
-    function createAlbum() {
-      const name = prompt("Название альбома:");
-      if (name) {
-        albums[name] = [];
-        localStorage.setItem('albums', JSON.stringify(albums));
-        renderAlbums();
-      }
-    }
-    function renderAlbums() {
-      document.getElementById('albumsList').innerHTML = Object.keys(albums).map(a => `<div class="track-card"><div class="track-title">💿 ${a}</div></div>`).join('');
     }
   </script>
 </body>
