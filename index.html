@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Liquid Glass Unified Music</title>
+  <title>Liquid Glass Smart Music</title>
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,13 +24,9 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* Кастомная полоса прокрутки страницы */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-    }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
 
     body {
@@ -43,7 +39,6 @@
       user-select: none;
     }
 
-    /* Анимированный неоновый фон */
     .glow-bg {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       z-index: -1; pointer-events: none; overflow: hidden;
@@ -97,15 +92,31 @@
       gap: 12px; margin-top: 16px;
     }
 
+    /* Карточка трека с поддержкой интерактивного статуса */
     .track-card {
       display: flex; align-items: center; justify-content: space-between;
       background: var(--glass-bg); border: 1px solid var(--glass-border);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-      padding: 10px 14px; border-radius: 18px; transition: background 0.2s;
+      padding: 10px 14px; border-radius: 18px; transition: all 0.2s;
     }
-    .track-card:hover { background: rgba(255, 255, 255, 0.08); }
+    .track-card.playing {
+      border-color: var(--neon-green);
+      background: rgba(0, 255, 135, 0.08);
+      box-shadow: 0 0 15px rgba(0, 255, 135, 0.15);
+    }
     .track-info { display: flex; align-items: center; gap: 12px; overflow: hidden; flex: 1; cursor: pointer; }
-    .cover-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+    
+    .cover-wrapper { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+    .cover-img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
+    
+    /* Индикатор воспроизведения поверх обложки */
+    .play-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+      border-radius: 12px; display: none; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--neon-green);
+    }
+    .track-card.playing .play-overlay { display: flex; }
+
     .track-title { font-weight: 600; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-artist { font-size: 12px; color: var(--text-sub); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
     .badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 6px; text-transform: uppercase; color: var(--neon-cyan); }
@@ -114,7 +125,7 @@
       background: none; border: none; color: #fff; font-size: 18px; padding: 6px; cursor: pointer; opacity: 0.8;
     }
 
-    /* Прозрачный Liquid Glass Плеер с полосой перемотки */
+    /* Плеер */
     .player-bar {
       position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
       width: min(92%, 850px);
@@ -127,7 +138,6 @@
       z-index: 20;
     }
 
-    /* Стили полосы прокрутки песни (Seek Bar) */
     .progress-container {
       display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 6px;
     }
@@ -158,7 +168,6 @@
     }
     nav button.active { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 135, 0.4); }
 
-    /* Виджеты просмотров YouTube и VK */
     .media-embed-box {
       margin-top: 20px; padding: 15px; background: var(--glass-bg);
       border: 1px solid var(--glass-border); border-radius: 20px;
@@ -181,55 +190,46 @@
 
   <header>
     <h2>Liquid Music</h2>
-    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Universal Auto-Search</span>
+    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Full Stream Engine</span>
   </header>
 
-  <!-- Экран 1: Автоматический Поиск -->
   <div id="screen-home" class="screen active">
     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-      <input type="text" id="searchInput" class="glass-input" placeholder="Введите название песни или исполнителя..." onkeyup="if(event.key==='Enter') autoSearchAll()">
+      <input type="text" id="searchInput" class="glass-input" placeholder="Любая песня в мире..." onkeyup="if(event.key==='Enter') autoSearchAll()">
       <button class="btn-neon" style="width: 110px; margin: 0;" onclick="autoSearchAll()">Искать</button>
     </div>
 
     <div id="searchResults" class="grid-container"></div>
-    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Сканирование 10+ бесплатных музыкальных баз...</div>
+    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Сканирование открытых аудиосетей...</div>
 
-    <!-- Исправленные веб-плееры YouTube и VK -->
     <div id="videoEmbeds" style="display:none;">
       <div class="media-embed-box">
-        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-cyan);">▶ YouTube Visual Player</div>
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-cyan);">▶ Дополнительный плейлист VK / YouTube</div>
         <div id="ytPlayer"></div>
-      </div>
-      <div class="media-embed-box">
-        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-pink);">🎵 VK Music Player</div>
-        <div id="vkPlayer"></div>
       </div>
     </div>
   </div>
 
-  <!-- Экран 2: Загрузка и Медиатека -->
   <div id="screen-library" class="screen">
     <label class="btn-neon" style="display: block; text-align: center; cursor: pointer;">
       📁 Загрузить свою песню с телефона
       <input type="file" id="fileInput" accept="audio/*" style="display: none;" onchange="uploadLocalTrack(event)">
     </label>
 
-    <h4 style="margin-top:24px; color: var(--neon-cyan);">Скачанные и локальные файлы</h4>
+    <h4 style="margin-top:24px; color: var(--neon-cyan);">Мои локальные файлы</h4>
     <div id="localList" class="grid-container"></div>
 
     <h4 style="margin-top:24px; color: var(--neon-pink);">Избранные радиостанции</h4>
     <div id="favRadioList" class="grid-container"></div>
   </div>
 
-  <!-- Экран 3: Радио -->
   <div id="screen-radio" class="screen">
-    <input type="text" id="cityInput" class="glass-input" placeholder="Введите город (на рус или англ)..." value="Москва">
+    <input type="text" id="cityInput" class="glass-input" placeholder="Введите город..." value="Москва">
     <button class="btn-neon" onclick="startRadioSearch()">Найти радиостанции</button>
     <div id="radioResults" class="grid-container"></div>
     <div id="radioLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Загрузка радиостанций...</div>
   </div>
 
-  <!-- Экран 4: Опции -->
   <div id="screen-settings" class="screen">
     <h4 style="color: var(--neon-green);">Шаг перемотки</h4>
     <select id="skipStepSelect" class="glass-select" onchange="updateSettings()">
@@ -242,14 +242,13 @@
     <input type="range" id="sleepTimer" min="0" max="120" value="0" step="5" style="width:100%;" oninput="updateTimer(this.value)">
   </div>
 
-  <!-- Текст песни -->
   <div id="lyricsModal" class="modal">
     <button onclick="closeLyrics()" class="btn-neon" style="width:auto; float:right; padding: 6px 16px;">✕</button>
     <h3 id="lyricsTitle" style="margin-top: 40px;">Текст песни</h3>
     <p id="lyricsText" style="white-space: pre-wrap; color: var(--text-sub); font-size: 15px; line-height: 1.6;"></p>
   </div>
 
-  <!-- Плеер c Полосой Прокрутки Песни -->
+  <!-- Плеер -->
   <div class="player-bar">
     <div class="progress-container">
       <span id="currentTime" class="time-stamp">0:00</span>
@@ -261,7 +260,7 @@
       <img id="playerCover" class="cover-img" src="https://via.placeholder.com/50/070913/ffffff?text=Music" alt="Cover">
       <div>
         <div id="playerTitle" class="track-title">Трек не выбран</div>
-        <div id="playerArtist" class="track-artist">Автопоиск включен</div>
+        <div id="playerArtist" class="track-artist">Полная версия</div>
       </div>
     </div>
     <div class="player-controls">
@@ -301,7 +300,6 @@
       "киев": "kiev", "минск": "minsk", "новосибирск": "novosibirsk", "екатеринбург": "ekaterinburg"
     };
 
-    // Инициализация БД
     const req = indexedDB.open("LiquidMusicPWA", 2);
     req.onupgradeneeded = e => {
       const database = e.target.result;
@@ -320,7 +318,7 @@
       if (btn) btn.classList.add('active');
     }
 
-    // --- Автоматический Мульти-API Поиск (10+ Источников) ---
+    // --- Автоматический Мульти-API Поиск Полноценных Треков ---
     async function autoSearchAll() {
       const q = document.getElementById('searchInput').value.trim();
       if (!q) return;
@@ -329,27 +327,19 @@
       document.getElementById('searchResults').innerHTML = '';
       document.getElementById('searchLoader').style.display = 'block';
 
-      // Активируем YouTube и VK интерактивные плееры
       document.getElementById('videoEmbeds').style.display = 'block';
       document.getElementById('ytPlayer').innerHTML = `
         <iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(q)}" allow="autoplay"></iframe>
       `;
-      document.getElementById('vkPlayer').innerHTML = `
-        <iframe src="https://vk.com/widget_community.php?act=a_search&q=${encodeURIComponent(q)}" allow="autoplay"></iframe>
-      `;
 
-      // Параллельный запрос к 10+ открытым музыкальным базам
+      // Ищем только в источниках, предоставляющих ПОЛНЫЕ версии
       const fetchers = [
+        fetchInvidiousFullAudio(q), // Поиск полных мировых треков (Invidious / Piped API)
         fetchAudius(q),
         fetchJamendo(q),
-        fetchITunes(q),
         fetchArchiveOrg(q),
         fetchFreeMusicArchive(q),
-        fetchWikimediaAudio(q),
-        fetchRadioBrowserTracks(q),
-        fetchDeezerPreview(q),
-        fetchCCMixter(q),
-        fetchSoundCloudOembed(q)
+        fetchCCMixter(q)
       ];
 
       const results = await Promise.allSettled(fetchers);
@@ -363,155 +353,164 @@
       document.getElementById('searchLoader').style.display = 'none';
 
       if (playlist.length === 0) {
-        document.getElementById('searchResults').innerHTML = '<div style="color:var(--text-sub); grid-column:1/-1; text-align:center;">Ничего не найдено во внешних базах. Используйте виджеты YouTube/VK выше.</div>';
+        document.getElementById('searchResults').innerHTML = '<div style="color:var(--text-sub); grid-column:1/-1; text-align:center;">Ничего не найдено в открытых источниках.</div>';
       } else {
         renderTrackCards(playlist, 'searchResults');
       }
     }
 
-    // 1. Audius API
+    // Поисковый шлюз для оригинальных мировых аудиопотоков (Invidious Mirror Engine)
+    async function fetchInvidiousFullAudio(q) {
+      try {
+        const res = await fetch(`https://invidious.nerdvpn.de/api/v1/search?q=${encodeURIComponent(q)}&type=video`);
+        const data = await res.json();
+        return (data || []).slice(0, 10).map(t => ({
+          id: 'inv_' + t.videoId,
+          title: t.title,
+          artist: t.author,
+          source: 'Full Audio',
+          cover: t.videoThumbnails?.[0]?.url || 'https://via.placeholder.com/50/00ff87/000000?text=HQ',
+          url: `https://invidious.nerdvpn.de/latest_version?id=${t.videoId}&itag=140` // Чистый поток 128kbps AAC
+        }));
+      } catch (e) {
+        return [];
+      }
+    }
+
     async function fetchAudius(q) {
-      const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(q)}&app_name=LIQUID`);
-      const data = await res.json();
-      return (data.data || []).map(t => ({
-        id: 'audius_' + t.id,
-        title: t.title,
-        artist: t.user.name,
-        source: 'Audius',
-        cover: t.artwork['150x150'] || 'https://via.placeholder.com/50/00ff87/000000?text=Audius',
-        url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=LIQUID`
-      }));
+      try {
+        const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(q)}&app_name=LIQUID`);
+        const data = await res.json();
+        return (data.data || []).map(t => ({
+          id: 'audius_' + t.id,
+          title: t.title,
+          artist: t.user.name,
+          source: 'Audius',
+          cover: t.artwork['150x150'] || 'https://via.placeholder.com/50/00ff87/000000?text=Audius',
+          url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=LIQUID`
+        }));
+      } catch (e) { return []; }
     }
 
-    // 2. Jamendo API
     async function fetchJamendo(q) {
-      const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${encodeURIComponent(q)}&limit=15`);
-      const data = await res.json();
-      return (data.results || []).map(t => ({
-        id: 'jamendo_' + t.id,
-        title: t.name,
-        artist: t.artist_name,
-        source: 'Jamendo',
-        cover: t.image || 'https://via.placeholder.com/50/60efff/000000?text=Jamendo',
-        url: t.audio
-      }));
+      try {
+        const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${encodeURIComponent(q)}&limit=10`);
+        const data = await res.json();
+        return (data.results || []).map(t => ({
+          id: 'jamendo_' + t.id,
+          title: t.name,
+          artist: t.artist_name,
+          source: 'Jamendo',
+          cover: t.image || 'https://via.placeholder.com/50/60efff/000000?text=Jamendo',
+          url: t.audio
+        }));
+      } catch (e) { return []; }
     }
 
-    // 3. iTunes Search API (Превью)
-    async function fetchITunes(q) {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&limit=15`);
-      const data = await res.json();
-      return (data.results || []).map(t => ({
-        id: 'itunes_' + t.trackId,
-        title: t.trackName,
-        artist: t.artistName,
-        source: 'iTunes',
-        cover: t.artworkUrl100 || 'https://via.placeholder.com/50/ff007f/ffffff?text=iTunes',
-        url: t.previewUrl
-      }));
-    }
-
-    // 4. Archive.org Audio API
     async function fetchArchiveOrg(q) {
-      const res = await fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}+AND+mediatype:audio&fl[]=identifier,title,creator&rows=10&output=json`);
-      const data = await res.json();
-      return (data.response?.docs || []).map(t => ({
-        id: 'archive_' + t.identifier,
-        title: t.title || 'Unknown Title',
-        artist: t.creator || 'Archive.org',
-        source: 'Archive',
-        cover: 'https://archive.org/services/img/' + t.identifier,
-        url: `https://archive.org/download/${t.identifier}`
-      }));
+      try {
+        const res = await fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}+AND+mediatype:audio&fl[]=identifier,title,creator&rows=8&output=json`);
+        const data = await res.json();
+        return (data.response?.docs || []).map(t => ({
+          id: 'archive_' + t.identifier,
+          title: t.title || 'Unknown Title',
+          artist: t.creator || 'Archive.org',
+          source: 'Archive',
+          cover: 'https://archive.org/services/img/' + t.identifier,
+          url: `https://archive.org/download/${t.identifier}`
+        }));
+      } catch (e) { return []; }
     }
 
-    // 5. Free Music Archive API
     async function fetchFreeMusicArchive(q) {
-      const res = await fetch(`https://freemusicarchive.org/api/get/tracks.json?api_key=60KGTBCK1B6U599E&q=${encodeURIComponent(q)}&limit=10`).catch(()=>null);
-      if (!res) return [];
-      const data = await res.json();
-      return (data.dataset || []).map(t => ({
-        id: 'fma_' + t.track_id,
-        title: t.track_title,
-        artist: t.artist_name,
-        source: 'FMA',
-        cover: 'https://via.placeholder.com/50/070913/ffffff?text=FMA',
-        url: t.track_file_url
-      }));
+      try {
+        const res = await fetch(`https://freemusicarchive.org/api/get/tracks.json?api_key=60KGTBCK1B6U599E&q=${encodeURIComponent(q)}&limit=5`);
+        const data = await res.json();
+        return (data.dataset || []).map(t => ({
+          id: 'fma_' + t.track_id,
+          title: t.track_title,
+          artist: t.artist_name,
+          source: 'FMA',
+          cover: 'https://via.placeholder.com/50/070913/ffffff?text=FMA',
+          url: t.track_file_url
+        }));
+      } catch (e) { return []; }
     }
 
-    // 6. Wikimedia Commons Audio
-    async function fetchWikimediaAudio(q) {
-      const res = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}+fileformat:ogg&srnamespace=6&format=json&origin=*`);
-      const data = await res.json();
-      return (data.query?.search || []).slice(0, 5).map(t => ({
-        id: 'wiki_' + t.pageid,
-        title: t.title.replace('File:', ''),
-        artist: 'Wikimedia Commons',
-        source: 'Wiki',
-        cover: 'https://via.placeholder.com/50/ffffff/000000?text=Wiki',
-        url: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(t.title.replace('File:', ''))}`
-      }));
-    }
-
-    // 7. Radio-Browser Stream Songs Search
-    async function fetchRadioBrowserTracks(q) {
-      const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(q)}?limit=5`);
-      const data = await res.json();
-      return (data || []).map(r => ({
-        id: 'radio_' + r.stationuuid,
-        title: r.name,
-        artist: r.country || 'Live Stream',
-        source: 'Radio',
-        cover: r.favicon || 'https://via.placeholder.com/50/00ff87/000000?text=Radio',
-        url: r.url_resolved
-      }));
-    }
-
-    // 8. Deezer Preview API (через CORS)
-    async function fetchDeezerPreview(q) {
-      const res = await fetch(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=10&output=jsonp`).catch(()=>null);
-      return []; // Резервный источник
-    }
-
-    // 9. CCMixter API
     async function fetchCCMixter(q) {
-      const res = await fetch(`https://ccmixter.org/api/query?tags=${encodeURIComponent(q)}&format=json`).catch(()=>null);
-      if (!res) return [];
-      const data = await res.json();
-      return (data || []).slice(0, 5).map(t => ({
-        id: 'ccm_' + t.upload_id,
-        title: t.upload_name,
-        artist: t.user_name,
-        source: 'CCMixter',
-        cover: 'https://via.placeholder.com/50/60efff/000000?text=CC',
-        url: t.files?.[0]?.download_url
-      })).filter(t => t.url);
+      try {
+        const res = await fetch(`https://ccmixter.org/api/query?tags=${encodeURIComponent(q)}&format=json`);
+        const data = await res.json();
+        return (data || []).slice(0, 5).map(t => ({
+          id: 'ccm_' + t.upload_id,
+          title: t.upload_name,
+          artist: t.user_name,
+          source: 'CCMixter',
+          cover: 'https://via.placeholder.com/50/60efff/000000?text=CC',
+          url: t.files?.[0]?.download_url
+        })).filter(t => t.url);
+      } catch (e) { return []; }
     }
 
-    // 10. SoundCloud OEmbed Resolver
-    async function fetchSoundCloudOembed(q) {
-      return []; // Заглушка интеграции
-    }
-
+    // Рендер карточек с подсветкой и управлением воспроизведением
     function renderTrackCards(list, containerId) {
       const container = document.getElementById(containerId);
       list.forEach((t) => {
         const globalIdx = playlist.findIndex(p => p.id === t.id);
         const card = document.createElement('div');
         card.className = 'track-card';
+        card.id = 'card_' + t.id;
         card.innerHTML = `
-          <div class="track-info" onclick="playIndex(${globalIdx})">
-            <img src="${t.cover}" class="cover-img" onerror="this.src='https://via.placeholder.com/50/070913/ffffff?text=Music'">
+          <div class="track-info" onclick="handleTrackClick(${globalIdx}, '${t.id}')">
+            <div class="cover-wrapper">
+              <img src="${t.cover}" class="cover-img" onerror="this.src='https://via.placeholder.com/50/070913/ffffff?text=Music'">
+              <div class="play-overlay" id="overlay_${t.id}">⏸</div>
+            </div>
             <div>
               <div class="track-title">${t.title}</div>
-              <div class="track-artist">${t.artist} <span class="badge">${t.source || 'Music'}</span></div>
+              <div class="track-artist">${t.artist} <span class="badge">${t.source}</span></div>
             </div>
           </div>
-          <button class="icon-btn" onclick="saveToOffline('${t.id}')">⬇️</button>
+          <button class="icon-btn" title="Только прослушивание" style="opacity:0.3; cursor:default;">🔒</button>
         `;
         container.appendChild(card);
       });
+    }
+
+    // Обработчик клика по карточке (Play / Pause прямо в карточке)
+    function handleTrackClick(idx, trackId) {
+      if (currentIndex === idx && !audio.paused) {
+        // Если уже играет эта песня — ставим на паузу
+        audio.pause();
+        updateUIPlayingState(false);
+      } else if (currentIndex === idx && audio.paused) {
+        // Если стояла на паузе — возобновляем
+        audio.play();
+        updateUIPlayingState(true);
+      } else {
+        // Запускаем новый трек
+        playIndex(idx);
+      }
+    }
+
+    function updateUIPlayingState(isPlaying) {
+      // Снимаем выделение со всех карточек
+      document.querySelectorAll('.track-card').forEach(c => c.classList.remove('playing'));
+      document.querySelectorAll('.play-overlay').forEach(o => o.innerText = '⏸');
+
+      if (currentTrack) {
+        const activeCard = document.getElementById('card_' + currentTrack.id);
+        if (activeCard) {
+          if (isPlaying) {
+            activeCard.classList.add('playing');
+            document.getElementById('overlay_' + currentTrack.id).innerText = '⏸';
+          } else {
+            document.getElementById('overlay_' + currentTrack.id).innerText = '▶';
+          }
+        }
+      }
+
+      document.getElementById('playBtn').innerText = isPlaying ? '⏸' : '▶';
     }
 
     // --- Локальные файлы и загрузка ---
@@ -565,7 +564,7 @@
         document.getElementById('playerTitle').innerText = t.title;
         document.getElementById('playerArtist').innerText = t.artist;
         document.getElementById('playerCover').src = t.cover;
-        document.getElementById('playBtn').innerText = '⏸';
+        updateUIPlayingState(true);
       };
     }
 
@@ -630,10 +629,10 @@
       audio.src = url; audio.play();
       document.getElementById('playerTitle').innerText = name;
       document.getElementById('playerArtist').innerText = "Прямой эфир (Радио)";
-      document.getElementById('playBtn').innerText = '⏸';
+      updateUIPlayingState(true);
     }
 
-    // --- Логика Аудиоплеера и Полосы Прокрутки ---
+    // --- Плеер и Полоса Перемотки ---
     const audio = document.getElementById('audio');
     const seekSlider = document.getElementById('seekSlider');
     const currentTimeEl = document.getElementById('currentTime');
@@ -647,6 +646,9 @@
         totalTimeEl.innerText = formatTime(audio.duration);
       }
     });
+
+    audio.addEventListener('pause', () => updateUIPlayingState(false));
+    audio.addEventListener('play', () => updateUIPlayingState(true));
 
     function seekTrack(value) {
       if (!isNaN(audio.duration)) {
@@ -664,16 +666,16 @@
       currentIndex = idx;
       currentTrack = playlist[idx];
       audio.src = currentTrack.url;
-      audio.play();
+      audio.play().catch(e => console.log("Ошибка воспроизведения:", e));
       document.getElementById('playerTitle').innerText = currentTrack.title;
       document.getElementById('playerArtist').innerText = currentTrack.artist;
       document.getElementById('playerCover').src = currentTrack.cover;
-      document.getElementById('playBtn').innerText = '⏸';
+      updateUIPlayingState(true);
     }
 
     function togglePlay() {
-      if (audio.paused) { audio.play(); document.getElementById('playBtn').innerText = '⏸'; }
-      else { audio.pause(); document.getElementById('playBtn').innerText = '▶'; }
+      if (audio.paused) { audio.play(); }
+      else { audio.pause(); }
     }
 
     function rewind() { audio.currentTime -= parseInt(settings.skipStep); }
@@ -681,7 +683,6 @@
     function nextTrack() { if (currentIndex < playlist.length - 1) playIndex(currentIndex + 1); }
     function prevTrack() { if (currentIndex > 0) playIndex(currentIndex - 1); }
 
-    // --- Текст песни ---
     async function showLyrics() {
       if (!currentTrack) return;
       document.getElementById('lyricsModal').style.display = 'block';
@@ -697,14 +698,12 @@
     }
     function closeLyrics() { document.getElementById('lyricsModal').style.display = 'none'; }
 
-    // --- Таймер сна ---
     function updateTimer(val) {
       document.getElementById('timerVal').innerText = val;
       if (timerId) clearTimeout(timerId);
       if (val > 0) {
         timerId = setTimeout(() => {
           audio.pause();
-          document.getElementById('playBtn').innerText = '▶';
         }, val * 60 * 1000);
       }
     }
