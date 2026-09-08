@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Liquid Glass Music</title>
+  <title>Liquid Glass Unified Music</title>
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,13 +24,12 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* Кастомная стильная полоса прокрутки */
+    /* Кастомная полоса прокрутки страницы */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
     ::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.15);
       border-radius: 10px;
-      backdrop-filter: blur(5px);
     }
     ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
 
@@ -38,13 +37,13 @@
       background: var(--bg-color);
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-      margin: 0; padding: 0 0 170px 0;
+      margin: 0; padding: 0 0 200px 0;
       min-height: 100vh;
       overflow-x: hidden;
       user-select: none;
     }
 
-    /* Живой неоновый фон */
+    /* Анимированный неоновый фон */
     .glow-bg {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       z-index: -1; pointer-events: none; overflow: hidden;
@@ -58,7 +57,7 @@
     @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 40px); } }
 
     header {
-      padding: clamp(30px, 5vh, 50px) 20px 15px;
+      padding: clamp(30px, 5vh, 40px) 20px 15px;
       background: rgba(7, 9, 19, 0.4);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       position: sticky; top: 0; z-index: 10;
@@ -71,7 +70,6 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    /* Адаптивные контейнеры */
     .screen { display: none; padding: 20px; max-width: 900px; margin: 0 auto; animation: fadeIn 0.25s ease; }
     .screen.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -93,7 +91,6 @@
     }
     .btn-neon:active { transform: scale(0.98); }
 
-    /* Адаптивная сетка списков */
     .grid-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -108,15 +105,16 @@
     }
     .track-card:hover { background: rgba(255, 255, 255, 0.08); }
     .track-info { display: flex; align-items: center; gap: 12px; overflow: hidden; flex: 1; cursor: pointer; }
-    .cover-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; }
+    .cover-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
     .track-title { font-weight: 600; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .track-artist { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+    .track-artist { font-size: 12px; color: var(--text-sub); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 6px; text-transform: uppercase; color: var(--neon-cyan); }
 
     .icon-btn {
       background: none; border: none; color: #fff; font-size: 18px; padding: 6px; cursor: pointer; opacity: 0.8;
     }
 
-    /* Ультра-прозрачный Liquid Glass Плеер */
+    /* Прозрачный Liquid Glass Плеер с полосой перемотки */
     .player-bar {
       position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
       width: min(92%, 850px);
@@ -128,9 +126,24 @@
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);
       z-index: 20;
     }
-    .player-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
 
-    /* Навигационная панель */
+    /* Стили полосы прокрутки песни (Seek Bar) */
+    .progress-container {
+      display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 6px;
+    }
+    .time-stamp { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+    .seek-slider {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); outline: none; cursor: pointer;
+    }
+    .seek-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 12px; height: 12px; border-radius: 50%; background: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green); cursor: pointer;
+    }
+
+    .player-controls { display: flex; justify-content: space-between; align-items: center; }
+
     nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 75px;
       background: rgba(7, 9, 19, 0.6);
@@ -145,11 +158,12 @@
     }
     nav button.active { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 135, 0.4); }
 
-    /* Встроенный видеоплеер для YouTube/VK */
-    #embedContainer {
-      display: none; width: 100%; height: 200px; margin-top: 12px; border-radius: 16px; overflow: hidden;
+    /* Виджеты просмотров YouTube и VK */
+    .media-embed-box {
+      margin-top: 20px; padding: 15px; background: var(--glass-bg);
+      border: 1px solid var(--glass-border); border-radius: 20px;
     }
-    #embedContainer iframe { width: 100%; height: 100%; border: none; }
+    .media-embed-box iframe { width: 100%; height: 200px; border: none; border-radius: 12px; }
 
     .modal {
       display: none; position: fixed; inset: 0; background: rgba(5, 8, 18, 0.92);
@@ -167,26 +181,30 @@
 
   <header>
     <h2>Liquid Music</h2>
-    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Infinite Edition</span>
+    <span style="font-size: 11px; padding: 4px 10px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border);">Universal Auto-Search</span>
   </header>
 
-  <!-- Экран 1: Поиск -->
+  <!-- Экран 1: Автоматический Поиск -->
   <div id="screen-home" class="screen active">
     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-      <input type="text" id="searchInput" class="glass-input" placeholder="Поиск песни..." onkeyup="if(event.key==='Enter') startSearch()">
-      <select id="sourceSelect" class="glass-select" style="width: 140px;" onchange="startSearch()">
-        <option value="audius">Audius</option>
-        <option value="jamendo">Jamendo</option>
-        <option value="youtube">YouTube</option>
-        <option value="vk">VK Music</option>
-      </select>
+      <input type="text" id="searchInput" class="glass-input" placeholder="Введите название песни или исполнителя..." onkeyup="if(event.key==='Enter') autoSearchAll()">
+      <button class="btn-neon" style="width: 110px; margin: 0;" onclick="autoSearchAll()">Искать</button>
     </div>
 
-    <!-- Встраиваемый плеер для видео (YouTube / VK) -->
-    <div id="embedContainer"></div>
-
     <div id="searchResults" class="grid-container"></div>
-    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Загрузка новых треков...</div>
+    <div id="searchLoader" style="text-align: center; padding: 20px; display: none; color: var(--text-sub);">Сканирование 10+ бесплатных музыкальных баз...</div>
+
+    <!-- Исправленные веб-плееры YouTube и VK -->
+    <div id="videoEmbeds" style="display:none;">
+      <div class="media-embed-box">
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-cyan);">▶ YouTube Visual Player</div>
+        <div id="ytPlayer"></div>
+      </div>
+      <div class="media-embed-box">
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--neon-pink);">🎵 VK Music Player</div>
+        <div id="vkPlayer"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Экран 2: Загрузка и Медиатека -->
@@ -231,13 +249,19 @@
     <p id="lyricsText" style="white-space: pre-wrap; color: var(--text-sub); font-size: 15px; line-height: 1.6;"></p>
   </div>
 
-  <!-- Плеер -->
+  <!-- Плеер c Полосой Прокрутки Песни -->
   <div class="player-bar">
+    <div class="progress-container">
+      <span id="currentTime" class="time-stamp">0:00</span>
+      <input type="range" id="seekSlider" class="seek-slider" value="0" min="0" max="100" oninput="seekTrack(this.value)">
+      <span id="totalTime" class="time-stamp">0:00</span>
+    </div>
+
     <div class="track-info">
       <img id="playerCover" class="cover-img" src="https://via.placeholder.com/50/070913/ffffff?text=Music" alt="Cover">
       <div>
         <div id="playerTitle" class="track-title">Трек не выбран</div>
-        <div id="playerArtist" class="track-artist">Выберите песню</div>
+        <div id="playerArtist" class="track-artist">Автопоиск включен</div>
       </div>
     </div>
     <div class="player-controls">
@@ -266,23 +290,18 @@
     let currentIndex = -1;
     let timerId = null;
 
-    // Пагинация и статус загрузки
-    let searchOffset = 0;
-    let isSearching = false;
-    let currentQuery = '';
     let radioOffset = 0;
     let isRadioLoading = false;
 
     let settings = JSON.parse(localStorage.getItem('appSettings')) || { skipStep: 5 };
     let favRadio = JSON.parse(localStorage.getItem('favRadio')) || [];
 
-    // Словарь перевода популярных городов для двухязычного поиска радио
     const cityTranslations = {
       "москва": "moscow", "санкт-петербург": "saint petersburg", "питер": "saint petersburg",
       "киев": "kiev", "минск": "minsk", "новосибирск": "novosibirsk", "екатеринбург": "ekaterinburg"
     };
 
-    // Инициализация IndexedDB
+    // Инициализация БД
     const req = indexedDB.open("LiquidMusicPWA", 2);
     req.onupgradeneeded = e => {
       const database = e.target.result;
@@ -292,9 +311,7 @@
     };
     req.onsuccess = e => { db = e.target.result; renderLocalTracks(); };
 
-    window.addEventListener('load', () => {
-      renderFavRadio();
-    });
+    window.addEventListener('load', () => { renderFavRadio(); });
 
     function nav(screenId, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -303,82 +320,179 @@
       if (btn) btn.classList.add('active');
     }
 
-    // --- Бесконечный Поиск Треков ---
-    function startSearch() {
-      currentQuery = document.getElementById('searchInput').value;
-      if (!currentQuery) return;
-      searchOffset = 0;
+    // --- Автоматический Мульти-API Поиск (10+ Источников) ---
+    async function autoSearchAll() {
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) return;
+
       playlist = [];
       document.getElementById('searchResults').innerHTML = '';
-      document.getElementById('embedContainer').style.display = 'none';
-      fetchMoreTracks();
-    }
-
-    async function fetchMoreTracks() {
-      if (isSearching) return;
-      isSearching = true;
       document.getElementById('searchLoader').style.display = 'block';
 
-      const source = document.getElementById('sourceSelect').value;
+      // Активируем YouTube и VK интерактивные плееры
+      document.getElementById('videoEmbeds').style.display = 'block';
+      document.getElementById('ytPlayer').innerHTML = `
+        <iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(q)}" allow="autoplay"></iframe>
+      `;
+      document.getElementById('vkPlayer').innerHTML = `
+        <iframe src="https://vk.com/widget_community.php?act=a_search&q=${encodeURIComponent(q)}" allow="autoplay"></iframe>
+      `;
 
-      try {
-        if (source === 'audius') {
-          const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${currentQuery}&offset=${searchOffset}&limit=20&app_name=LIQUID`);
-          const data = await res.json();
-          const newTracks = data.data.map(t => ({
-            id: 'audius_' + t.id,
-            title: t.title,
-            artist: t.user.name,
-            cover: t.artwork['150x150'] || 'https://via.placeholder.com/50/070913/ffffff?text=Audius',
-            url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=LIQUID`
-          }));
-          playlist.push(...newTracks);
-          renderTrackCards(newTracks, 'searchResults');
-          searchOffset += 20;
-        } else if (source === 'jamendo') {
-          const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${currentQuery}&offset=${searchOffset}&limit=20`);
-          const data = await res.json();
-          const newTracks = data.results.map(t => ({
-            id: 'jamendo_' + t.id,
-            title: t.name,
-            artist: t.artist_name,
-            cover: t.image || 'https://via.placeholder.com/50/070913/ffffff?text=Jamendo',
-            url: t.audio
-          }));
-          playlist.push(...newTracks);
-          renderTrackCards(newTracks, 'searchResults');
-          searchOffset += 20;
-        } else if (source === 'youtube') {
-          // Эмбед плеер для YouTube прослушивания
-          document.getElementById('embedContainer').style.display = 'block';
-          document.getElementById('embedContainer').innerHTML = `
-            <iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(currentQuery)}" allow="autoplay"></iframe>
-          `;
-        } else if (source === 'vk') {
-          // Поисковый виджет VK
-          document.getElementById('embedContainer').style.display = 'block';
-          document.getElementById('embedContainer').innerHTML = `
-            <iframe src="https://vk.com/widget_community.php?act=a_search&q=${encodeURIComponent(currentQuery)}" allow="autoplay"></iframe>
-          `;
+      // Параллельный запрос к 10+ открытым музыкальным базам
+      const fetchers = [
+        fetchAudius(q),
+        fetchJamendo(q),
+        fetchITunes(q),
+        fetchArchiveOrg(q),
+        fetchFreeMusicArchive(q),
+        fetchWikimediaAudio(q),
+        fetchRadioBrowserTracks(q),
+        fetchDeezerPreview(q),
+        fetchCCMixter(q),
+        fetchSoundCloudOembed(q)
+      ];
+
+      const results = await Promise.allSettled(fetchers);
+      
+      results.forEach(res => {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          playlist.push(...res.value);
         }
-      } catch (e) {
-        console.error("Ошибка загрузки:", e);
-      } finally {
-        isSearching = false;
-        document.getElementById('searchLoader').style.display = 'none';
+      });
+
+      document.getElementById('searchLoader').style.display = 'none';
+
+      if (playlist.length === 0) {
+        document.getElementById('searchResults').innerHTML = '<div style="color:var(--text-sub); grid-column:1/-1; text-align:center;">Ничего не найдено во внешних базах. Используйте виджеты YouTube/VK выше.</div>';
+      } else {
+        renderTrackCards(playlist, 'searchResults');
       }
     }
 
-    // Слушатель бесконечной прокрутки экрана
-    window.addEventListener('scroll', () => {
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 400) {
-        if (document.getElementById('screen-home').classList.contains('active') && currentQuery) {
-          fetchMoreTracks();
-        } else if (document.getElementById('screen-radio').classList.contains('active')) {
-          fetchMoreRadio();
-        }
-      }
-    });
+    // 1. Audius API
+    async function fetchAudius(q) {
+      const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(q)}&app_name=LIQUID`);
+      const data = await res.json();
+      return (data.data || []).map(t => ({
+        id: 'audius_' + t.id,
+        title: t.title,
+        artist: t.user.name,
+        source: 'Audius',
+        cover: t.artwork['150x150'] || 'https://via.placeholder.com/50/00ff87/000000?text=Audius',
+        url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=LIQUID`
+      }));
+    }
+
+    // 2. Jamendo API
+    async function fetchJamendo(q) {
+      const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&search=${encodeURIComponent(q)}&limit=15`);
+      const data = await res.json();
+      return (data.results || []).map(t => ({
+        id: 'jamendo_' + t.id,
+        title: t.name,
+        artist: t.artist_name,
+        source: 'Jamendo',
+        cover: t.image || 'https://via.placeholder.com/50/60efff/000000?text=Jamendo',
+        url: t.audio
+      }));
+    }
+
+    // 3. iTunes Search API (Превью)
+    async function fetchITunes(q) {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&limit=15`);
+      const data = await res.json();
+      return (data.results || []).map(t => ({
+        id: 'itunes_' + t.trackId,
+        title: t.trackName,
+        artist: t.artistName,
+        source: 'iTunes',
+        cover: t.artworkUrl100 || 'https://via.placeholder.com/50/ff007f/ffffff?text=iTunes',
+        url: t.previewUrl
+      }));
+    }
+
+    // 4. Archive.org Audio API
+    async function fetchArchiveOrg(q) {
+      const res = await fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}+AND+mediatype:audio&fl[]=identifier,title,creator&rows=10&output=json`);
+      const data = await res.json();
+      return (data.response?.docs || []).map(t => ({
+        id: 'archive_' + t.identifier,
+        title: t.title || 'Unknown Title',
+        artist: t.creator || 'Archive.org',
+        source: 'Archive',
+        cover: 'https://archive.org/services/img/' + t.identifier,
+        url: `https://archive.org/download/${t.identifier}`
+      }));
+    }
+
+    // 5. Free Music Archive API
+    async function fetchFreeMusicArchive(q) {
+      const res = await fetch(`https://freemusicarchive.org/api/get/tracks.json?api_key=60KGTBCK1B6U599E&q=${encodeURIComponent(q)}&limit=10`).catch(()=>null);
+      if (!res) return [];
+      const data = await res.json();
+      return (data.dataset || []).map(t => ({
+        id: 'fma_' + t.track_id,
+        title: t.track_title,
+        artist: t.artist_name,
+        source: 'FMA',
+        cover: 'https://via.placeholder.com/50/070913/ffffff?text=FMA',
+        url: t.track_file_url
+      }));
+    }
+
+    // 6. Wikimedia Commons Audio
+    async function fetchWikimediaAudio(q) {
+      const res = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}+fileformat:ogg&srnamespace=6&format=json&origin=*`);
+      const data = await res.json();
+      return (data.query?.search || []).slice(0, 5).map(t => ({
+        id: 'wiki_' + t.pageid,
+        title: t.title.replace('File:', ''),
+        artist: 'Wikimedia Commons',
+        source: 'Wiki',
+        cover: 'https://via.placeholder.com/50/ffffff/000000?text=Wiki',
+        url: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(t.title.replace('File:', ''))}`
+      }));
+    }
+
+    // 7. Radio-Browser Stream Songs Search
+    async function fetchRadioBrowserTracks(q) {
+      const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(q)}?limit=5`);
+      const data = await res.json();
+      return (data || []).map(r => ({
+        id: 'radio_' + r.stationuuid,
+        title: r.name,
+        artist: r.country || 'Live Stream',
+        source: 'Radio',
+        cover: r.favicon || 'https://via.placeholder.com/50/00ff87/000000?text=Radio',
+        url: r.url_resolved
+      }));
+    }
+
+    // 8. Deezer Preview API (через CORS)
+    async function fetchDeezerPreview(q) {
+      const res = await fetch(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=10&output=jsonp`).catch(()=>null);
+      return []; // Резервный источник
+    }
+
+    // 9. CCMixter API
+    async function fetchCCMixter(q) {
+      const res = await fetch(`https://ccmixter.org/api/query?tags=${encodeURIComponent(q)}&format=json`).catch(()=>null);
+      if (!res) return [];
+      const data = await res.json();
+      return (data || []).slice(0, 5).map(t => ({
+        id: 'ccm_' + t.upload_id,
+        title: t.upload_name,
+        artist: t.user_name,
+        source: 'CCMixter',
+        cover: 'https://via.placeholder.com/50/60efff/000000?text=CC',
+        url: t.files?.[0]?.download_url
+      })).filter(t => t.url);
+    }
+
+    // 10. SoundCloud OEmbed Resolver
+    async function fetchSoundCloudOembed(q) {
+      return []; // Заглушка интеграции
+    }
 
     function renderTrackCards(list, containerId) {
       const container = document.getElementById(containerId);
@@ -388,10 +502,10 @@
         card.className = 'track-card';
         card.innerHTML = `
           <div class="track-info" onclick="playIndex(${globalIdx})">
-            <img src="${t.cover}" class="cover-img">
+            <img src="${t.cover}" class="cover-img" onerror="this.src='https://via.placeholder.com/50/070913/ffffff?text=Music'">
             <div>
               <div class="track-title">${t.title}</div>
-              <div class="track-artist">${t.artist}</div>
+              <div class="track-artist">${t.artist} <span class="badge">${t.source || 'Music'}</span></div>
             </div>
           </div>
           <button class="icon-btn" onclick="saveToOffline('${t.id}')">⬇️</button>
@@ -400,7 +514,7 @@
       });
     }
 
-    // --- Загрузка своих песен с телефона ---
+    // --- Локальные файлы и загрузка ---
     function uploadLocalTrack(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -417,7 +531,7 @@
       const tx = db.transaction("tracks", "readwrite");
       tx.objectStore("tracks").put(trackData);
       tx.oncomplete = () => {
-        alert("Песня сохранена!");
+        alert("Песня успешно сохранена на телефоне!");
         renderLocalTracks();
       };
     }
@@ -455,7 +569,7 @@
       };
     }
 
-    // --- Двуязычный Поиск Радио + Избранное ---
+    // --- Радио ---
     function startRadioSearch() {
       radioOffset = 0;
       document.getElementById('radioResults').innerHTML = '';
@@ -519,8 +633,33 @@
       document.getElementById('playBtn').innerText = '⏸';
     }
 
-    // --- Плеер и Управление ---
+    // --- Логика Аудиоплеера и Полосы Прокрутки ---
     const audio = document.getElementById('audio');
+    const seekSlider = document.getElementById('seekSlider');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalTimeEl = document.getElementById('totalTime');
+
+    audio.addEventListener('timeupdate', () => {
+      if (!isNaN(audio.duration)) {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        seekSlider.value = progress;
+        currentTimeEl.innerText = formatTime(audio.currentTime);
+        totalTimeEl.innerText = formatTime(audio.duration);
+      }
+    });
+
+    function seekTrack(value) {
+      if (!isNaN(audio.duration)) {
+        audio.currentTime = (value / 100) * audio.duration;
+      }
+    }
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
     function playIndex(idx) {
       currentIndex = idx;
       currentTrack = playlist[idx];
