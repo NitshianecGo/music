@@ -1,4 +1,4 @@
-const CACHE_NAME = 'music-pwa-v1';
+const CACHE_NAME = 'neon-music-v1';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {
