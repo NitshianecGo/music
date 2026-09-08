@@ -1,4 +1,4 @@
-const CACHE_NAME = 'neon-music-v1';
+const CACHE_NAME = 'liquid-music-v2';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {
