@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Spotify PWA</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyMusic">
+  <style>
+    :root {
+      --bg: #121212;
+      --card: #181818;
+      --primary: #1db954;
+      --text: #ffffff;
+      --subtext: #b3b3b3;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 0 0 120px 0; user-select: none;
+    }
+    header { padding: 16px; background: #000; display: flex; justify-content: space-between; align-items: center; }
+    .screen { display: none; padding: 16px; }
+    .screen.active { display: block; }
+
+    /* Auth & Settings Forms */
+    input, select, button {
+      width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px;
+      border: 1px solid #333; background: #282828; color: #fff; box-sizing: border-box;
+    }
+    button.btn-primary { background: var(--primary); border: none; font-weight: bold; cursor: pointer; }
+
+    /* List Item Styling */
+    .track-card {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--card); padding: 10px; margin-bottom: 8px; border-radius: 8px;
+    }
+    .track-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+    .cover-img { width: 48px; height: 48px; border-radius: 4px; object-fit: cover; background: #333; }
+    .track-title { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 12px; color: var(--subtext); }
+
+    /* Bottom Player */
+    .player-bar {
+      position: fixed; bottom: 60px; left: 0; right: 0;
+      background: #212121; padding: 10px 16px; display: flex; flex-direction: column; gap: 8px;
+      border-top: 1px solid #333;
+    }
+    .player-controls { display: flex; justify-content: space-between; align-items: center; }
+    .btn-icon { background: none; border: none; color: #fff; font-size: 18px; width: auto; padding: 4px 8px; }
+
+    /* Navigation Bar */
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: #000; display: flex; justify-content: space-around; align-items: center;
+      border-top: 1px solid #222;
+    }
+    nav button { background: none; border: none; color: var(--subtext); font-size: 11px; padding: 0; }
+    nav button.active { color: var(--primary); }
+
+    /* Lyrics Modal */
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+      padding: 20px; z-index: 100; overflow-y: auto; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h3 id="appTitle">Главная</h3>
+    <span id="userStatus" style="font-size: 12px; color: var(--subtext);">Гость</span>
+  </header>
+
+  <!-- Экран 1: Поиск и Плейлист -->
+  <div id="screen-home" class="screen active">
+    <input type="text" id="searchInput" placeholder="Поиск (YouTube / SoundCloud)..." onkeyup="if(event.key==='Enter') searchMusic()">
+    <div id="searchResults" style="margin-top: 16px;"></div>
+  </div>
+
+  <!-- Экран 2: Альбомы и Избранное -->
+  <div id="screen-library" class="screen">
+    <button class="btn-primary" onclick="createAlbum()">+ Создать альбом</button>
+    <h4>Избранное</h4>
+    <div id="favList"></div>
+    <h4>Мои Альбомы</h4>
+    <div id="albumsList"></div>
+  </div>
+
+  <!-- Экран 3: Радио -->
+  <div id="screen-radio" class="screen">
+    <input type="text" id="cityInput" placeholder="Укажите город (напр. Moscow)" value="Moscow">
+    <button class="btn-primary" onclick="loadRadio()">Найти радиостанции</button>
+    <div id="radioList" style="margin-top: 16px;"></div>
+  </div>
+
+  <!-- Экран 4: Настройки и Аккаунт -->
+  <div id="screen-settings" class="screen">
+    <h4>Вход / Регистрация</h4>
+    <input type="text" id="loginInput" placeholder="Логин">
+    <input type="password" id="passInput" placeholder="Пароль">
+    <button class="btn-primary" onclick="saveAuth()">Сохранить профиль</button>
+
+    <h4 style="margin-top:24px;">Перемотка (секунды)</h4>
+    <select id="skipStepSelect" onchange="updateSettings()">
+      <option value="5">5 секунд</option>
+      <option value="10">10 секунд</option>
+      <option value="15">15 секунд</option>
+    </select>
+
+    <h4 style="margin-top:24px;">Таймер сна: <span id="timerVal">0</span> мин</h4>
+    <input type="range" id="sleepTimer" min="0" max="120" value="0" step="5" oninput="updateTimer(this.value)">
+  </div>
+
+  <!-- Экран 5: Оффлайн-Песни (Доступен без интернета) -->
+  <div id="screen-offline" class="screen">
+    <h4>Скачанные треки (Оффлайн)</h4>
+    <div id="offlineList"></div>
+  </div>
+
+  <!-- Модальное окно с текстом песни -->
+  <div id="lyricsModal" class="modal">
+    <button onclick="closeLyrics()" style="float: right; width: auto;">✕</button>
+    <h3 id="lyricsTitle">Текст песни</h3>
+    <p id="lyricsText" style="white-space: pre-wrap; color: var(--subtext); margin-top: 20px;"></p>
+  </div>
+
+  <!-- Нижняя панель плеера -->
+  <div class="player-bar">
+    <div class="track-info">
+      <img id="playerCover" class="cover-img" src="https://via.placeholder.com/48" alt="Cover">
+      <div>
+        <div id="playerTitle" class="track-title">Песня не выбрана</div>
+        <div id="playerArtist" class="track-artist">Артист</div>
+      </div>
+    </div>
+    <div class="player-controls">
+      <button class="btn-icon" onclick="showLyrics()">📜</button>
+      <button class="btn-icon" onclick="prevTrack()">⏮</button>
+      <button class="btn-icon" onclick="rewind()">⏪</button>
+      <button class="btn-icon" onclick="togglePlay()" id="playBtn">▶</button>
+      <button class="btn-icon" onclick="forward()">⏩</button>
+      <button class="btn-icon" onclick="nextTrack()">⏭</button>
+      <button class="btn-icon" onclick="toggleFav()">❤️</button>
+    </div>
+  </div>
+
+  <!-- Навигация -->
+  <nav>
+    <button onclick="nav('home')" class="active">Поиск</button>
+    <button onclick="nav('library')">Медиатека</button>
+    <button onclick="nav('radio')">Радио</button>
+    <button onclick="nav('settings')">Опции</button>
+    <button onclick="nav('offline')">Оффлайн</button>
+  </nav>
+
+  <audio id="audio"></audio>
+
+  <script>
+    let db;
+    let currentTrack = null;
+    let playlist = [];
+    let currentIndex = -1;
+    let timerId = null;
+
+    // Настройки по умолчанию
+    let settings = JSON.parse(localStorage.getItem('appSettings')) || { skipStep: 5, user: null };
+    let favorites = JSON.parse(localStorage.getItem('favs')) || [];
+    let albums = JSON.parse(localStorage.getItem('albums')) || {};
+
+    // 1. Инициализация IndexedDB для хранения оффлайн-музыки
+    const req = indexedDB.open("MusicPWA", 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore("tracks", { keyPath: "id" });
+    req.onsuccess = e => { db = e.target.result; renderOffline(); };
+
+    // Проверка интернета при запуске
+    window.addEventListener('load', () => {
+      document.getElementById('skipStepSelect').value = settings.skipStep;
+      if (settings.user) document.getElementById('userStatus').innerText = settings.user.login;
+      if (!navigator.onLine) {
+        alert("Нет интернета. Переключение в Оффлайн-режим.");
+        nav('offline');
+      }
+      renderFavs();
+      renderAlbums();
+    });
+
+    // Навигация по вкладкам
+    function nav(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById('screen-' + screenId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // 2. Поиск музыки (Демо-источник Audius / SoundCloud API)
+    async function searchMusic() {
+      const q = document.getElementById('searchInput').value;
+      if (!q) return;
+      const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${q}&app_name=EXAMPLE`);
+      const data = await res.json();
+      playlist = data.data.map(t => ({
+        id: t.id,
+        title: t.title,
+        artist: t.user.name,
+        cover: t.artwork['150x150'] || 'https://via.placeholder.com/48',
+        url: `https://discoveryprovider.audius.co/v1/tracks/${t.id}/stream?app_name=EXAMPLE`
+      }));
+      renderPlaylist(playlist, 'searchResults');
+    }
+
+    function renderPlaylist(list, targetId) {
+      const el = document.getElementById(targetId);
+      el.innerHTML = list.map((t, idx) => `
+        <div class="track-card">
+          <div class="track-info" onclick="playIndex(${idx})">
+            <img src="${t.cover}" class="cover-img">
+            <div>
+              <div class="track-title">${t.title}</div>
+              <div class="track-artist">${t.artist}</div>
+            </div>
+          </div>
+          <div>
+            <button class="btn-icon" onclick="downloadTrack('${t.id}')">⬇️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 3. Воспроизведение и перемотка
+    const audio = document.getElementById('audio');
+    function playIndex(idx) {
+      currentIndex = idx;
+      currentTrack = playlist[idx];
+      audio.src = currentTrack.url;
+      audio.play();
+      document.getElementById('playerTitle').innerText = currentTrack.title;
+      document.getElementById('playerArtist').innerText = currentTrack.artist;
+      document.getElementById('playerCover').src = currentTrack.cover;
+      document.getElementById('playBtn').innerText = '⏸';
+
+      // Интеграция с экраном блокировки iOS/Android
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.title, artist: currentTrack.artist,
+          artwork: [{ src: currentTrack.cover, sizes: '150x150', type: 'image/jpeg' }]
+        });
+      }
+    }
+
+    function togglePlay() {
+      if (audio.paused) { audio.play(); document.getElementById('playBtn').innerText = '⏸'; }
+      else { audio.pause(); document.getElementById('playBtn').innerText = '▶'; }
+    }
+
+    function rewind() { audio.currentTime -= parseInt(settings.skipStep); }
+    function forward() { audio.currentTime += parseInt(settings.skipStep); }
+    function nextTrack() { if (currentIndex < playlist.length - 1) playIndex(currentIndex + 1); }
+    function prevTrack() { if (currentIndex > 0) playIndex(currentIndex - 1); }
+
+    // 4. Текст песни (Lyrics API)
+    async function showLyrics() {
+      if (!currentTrack) return;
+      document.getElementById('lyricsModal').style.display = 'block';
+      document.getElementById('lyricsTitle').innerText = currentTrack.title;
+      document.getElementById('lyricsText').innerText = "Загрузка текста...";
+      try {
+        const res = await fetch(`https://api.lyrics.ovh/v1/${currentTrack.artist}/${currentTrack.title}`);
+        const data = await res.json();
+        document.getElementById('lyricsText').innerText = data.lyrics || "Текст песни не найден.";
+      } catch {
+        document.getElementById('lyricsText').innerText = "Ошибка загрузки текста.";
+      }
+    }
+    function closeLyrics() { document.getElementById('lyricsModal').style.display = 'none'; }
+
+    // 5. Оффлайн-скачивание (IndexedDB)
+    async function downloadTrack(id) {
+      const track = playlist.find(t => t.id === id);
+      const res = await fetch(track.url);
+      const blob = await res.blob();
+      const tx = db.transaction("tracks", "readwrite");
+      tx.objectStore("tracks").put({ ...track, blob: blob });
+      alert("Скачано для оффлайн прослушивания!");
+      renderOffline();
+    }
+
+    function renderOffline() {
+      if (!db) return;
+      const tx = db.transaction("tracks", "readonly");
+      tx.objectStore("tracks").getAll().onsuccess = e => {
+        const list = e.target.result;
+        document.getElementById('offlineList').innerHTML = list.map(t => `
+          <div class="track-card" onclick="playBlob('${t.id}')">
+            <div class="track-info">
+              <img src="${t.cover}" class="cover-img">
+              <div><div class="track-title">${t.title}</div><div class="track-artist">${t.artist}</div></div>
+            </div>
+          </div>
+        `).join('');
+      };
+    }
+
+    function playBlob(id) {
+      const tx = db.transaction("tracks", "readonly");
+      tx.objectStore("tracks").get(id).onsuccess = e => {
+        const t = e.target.result;
+        audio.src = URL.createObjectURL(t.blob);
+        audio.play();
+        document.getElementById('playerTitle').innerText = t.title;
+        document.getElementById('playerArtist').innerText = t.artist;
+      };
+    }
+
+    // 6. Поиск Радио
+    async function loadRadio() {
+      const city = document.getElementById('cityInput').value;
+      const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${city}`);
+      const data = await res.json();
+      document.getElementById('radioList').innerHTML = data.slice(0, 15).map(r => `
+        <div class="track-card" onclick="playRadio('${r.url_resolved}', '${r.name}')">
+          <div class="track-info">
+            <div class="track-title">${r.name}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    function playRadio(url, name) {
+      audio.src = url; audio.play();
+      document.getElementById('playerTitle').innerText = name;
+      document.getElementById('playerArtist').innerText = "Прямой эфир (Радио)";
+    }
+
+    // 7. Таймер сна
+    function updateTimer(val) {
+      document.getElementById('timerVal').innerText = val;
+      if (timerId) clearTimeout(timerId);
+      if (val > 0) {
+        timerId = setTimeout(() => {
+          audio.pause();
+          document.getElementById('playBtn').innerText = '▶';
+          alert("Таймер сработал: музыка остановлена.");
+        }, val * 60 * 1000);
+      }
+    }
+
+    // 8. Настройки и Авторизация
+    function saveAuth() {
+      const login = document.getElementById('loginInput').value;
+      if (login) {
+        settings.user = { login };
+        localStorage.setItem('appSettings', JSON.stringify(settings));
+        document.getElementById('userStatus').innerText = login;
+        alert("Профиль сохранен!");
+      }
+    }
+    function updateSettings() {
+      settings.skipStep = document.getElementById('skipStepSelect').value;
+      localStorage.setItem('appSettings', JSON.stringify(settings));
+    }
+
+    // 9. Избранное и Альбомы
+    function toggleFav() {
+      if (!currentTrack) return;
+      favorites.push(currentTrack);
+      localStorage.setItem('favs', JSON.stringify(favorites));
+      renderFavs();
+      alert("Добавлено в избранное!");
+    }
+    function renderFavs() {
+      document.getElementById('favList').innerHTML = favorites.map(t => `<div class="track-card"><div class="track-title">${t.title}</div></div>`).join('');
+    }
+    function createAlbum() {
+      const name = prompt("Название альбома:");
+      if (name) {
+        albums[name] = [];
+        localStorage.setItem('albums', JSON.stringify(albums));
+        renderAlbums();
+      }
+    }
+    function renderAlbums() {
+      document.getElementById('albumsList').innerHTML = Object.keys(albums).map(a => `<div class="track-card"><div class="track-title">💿 ${a}</div></div>`).join('');
+    }
+  </script>
+</body>
+</html>
