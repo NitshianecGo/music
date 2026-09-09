@@ -12,6 +12,8 @@ const audio=$("#audio");
 let sb=null, user=null;
 let tracks=[], queue=[], queueIndex=-1;
 let favs=[], history=[], playlists=[];
+let currentTrackId=null;
+let currentSource=null;
 
 function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function toast(t){const x=$("#toast");x.textContent=t;x.style.opacity=1;x.style.transform="translateY(0)";setTimeout(()=>{x.style.opacity=0;x.style.transform="translateY(8px)"},1900)}
@@ -48,6 +50,8 @@ async function addFavorite(t){
   const row={user_id:user?.id||"local",item_id:String(t.id),title:t.title,artist:t.artist||"",artwork:t.artwork||"",url:t.url||"",source:t.source||"itunes"};
   if(sb&&user) await sb.from("favorites").insert(row); else {favs.push(row);localStorage.setItem("mw_favs",JSON.stringify(favs))}
   favs.unshift(row);renderFavs();toast("Добавлено в избранное");
+  // Animate heart
+  animateHeart();
 }
 async function removeFavorite(id){
   if(sb&&user) await sb.from("favorites").delete().eq("user_id",user.id).eq("item_id",String(id));
@@ -61,15 +65,54 @@ async function saveHistory(t){
 }
 function img(u){return u?`<img src="${esc(u)}" loading="lazy" onerror="this.remove()">`:"♪"}
 function row(t){
- return `<div class="track-row"><div class="cover">${img(t.artwork)}</div><div><strong>${esc(t.title)}</strong><span>${esc(t.artist)} • ${esc(t.album||t.source||"Track")}</span></div><button data-play="${esc(t.id)}">▶</button><button data-fav="${esc(t.id)}">${isFav(t.id)?"♥":"♡"}</button></div>`
+ const isPlaying = currentTrackId === String(t.id || t.item_id) && !audio.paused;
+ return `<div class="track-row"><div class="cover">${img(t.artwork)}</div><div><strong>${esc(t.title)}</strong><span>${esc(t.artist)} • ${esc(t.album||t.source||"Track")}</span></div><button data-play="${esc(t.id||t.item_id)}" class="play-btn ${isPlaying?'playing':''}">${isPlaying?'⏸':'▶'}</button><button data-fav="${esc(t.id||t.item_id)}" class="fav-btn ${isFav(t.id||t.item_id)?'active':''}">${isFav(t.id||t.item_id)?'♥':'♡'}</button></div>`
 }
 function card(t){
- return `<article class="card"><div class="cover">${img(t.artwork)}</div><h3>${esc(t.title)}</h3><p>${esc(t.artist)}</p><div class="card-actions"><button class="icon-btn play" data-play="${esc(t.id)}">▶</button><button class="icon-btn" data-fav="${esc(t.id)}">${isFav(t.id)?"♥":"♡"}</button></div></article>`
+ const isPlaying = currentTrackId === String(t.id || t.item_id) && !audio.paused;
+ return `<article class="card"><div class="cover">${img(t.artwork)}</div><h3>${esc(t.title)}</h3><p>${esc(t.artist)}</p><div class="card-actions"><button class="icon-btn play ${isPlaying?'playing':''}" data-play="${esc(t.id||t.item_id)}">${isPlaying?'⏸':'▶'}</button><button class="icon-btn fav-btn ${isFav(t.id||t.item_id)?'active':''}" data-fav="${esc(t.id||t.item_id)}">${isFav(t.id||t.item_id)?'♥':'♡'}</button></div></article>`
 }
 function bind(el){
  el.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>playById(b.dataset.play));
- el.querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>{const t=[...tracks,...favs].find(x=>String(x.id||x.item_id)===String(b.dataset.fav));if(t)(isFav(t.id||t.item_id)?removeFavorite(t.id||t.item_id):addFavorite(t))})
+ el.querySelectorAll("[data-fav]").forEach(b=>{
+   b.onclick=(e)=>{
+     e.stopPropagation();
+     const id = b.dataset.fav;
+     const t=[...tracks,...favs].find(x=>String(x.id||x.item_id)===String(id));
+     if(t){
+       if(isFav(t.id||t.item_id)){
+         removeFavorite(t.id||t.item_id);
+         b.classList.remove('active');
+         b.textContent='♡';
+       } else {
+         addFavorite(t);
+         b.classList.add('active');
+         b.textContent='♥';
+         animateHeart();
+       }
+     }
+   }
+ });
 }
+
+function animateHeart(){
+  const heart = document.createElement('div');
+  heart.className = 'heart-animation';
+  heart.textContent = '♥';
+  heart.style.cssText = `
+    position: fixed;
+    font-size: 48px;
+    color: #ff3366;
+    pointer-events: none;
+    z-index: 1000;
+    animation: heartFloat 1s ease-out forwards;
+    left: ${Math.random() * window.innerWidth * 0.6 + window.innerWidth * 0.2}px;
+    top: ${Math.random() * window.innerHeight * 0.3 + window.innerHeight * 0.3}px;
+  `;
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 1000);
+}
+
 async function searchItunes(q){
  const r=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=30`);
  const j=await r.json();
@@ -97,47 +140,150 @@ async function searchVK(q){
 async function searchAll(q,target){
  if(!q.trim())return;
  $(target).innerHTML='<div class="empty-state">Ищем музыку…</div>';
- const source=$("#sourceSelect")?.value||"all";
  try{
-  const jobs=[];
-  if(source==="all"||source==="itunes") jobs.push(searchItunes(q).catch(()=>[]));
-  else jobs.push(Promise.resolve([]));
-  if(source==="all"||source==="youtube") jobs.push(searchYouTube(q).catch(()=>[]));
-  else jobs.push(Promise.resolve([]));
-  if(source==="all"||source==="vk") jobs.push(searchVK(q).catch(()=>[]));
-  else jobs.push(Promise.resolve([]));
+  const jobs = [
+    searchItunes(q).catch(()=>[]),
+    searchYouTube(q).catch(()=>[]),
+    searchVK(q).catch(()=>[])
+  ];
   const [a,b,c]=await Promise.all(jobs);
   tracks=[...a,...b,...c];
   $(target).className=target==="#searchResults"?"track-list":"track-grid";
   $(target).innerHTML=tracks.length?tracks.map(target==="#searchResults"?row:card).join(""):"<div class='empty-state'>Ничего не найдено.</div>";
   bind($(target));
-  const vkMsg=C.vkAccessToken&&C.vkAccessToken!=="PASTE_VK_ACCESS_TOKEN"?"VK включён":"VK требует токен";
-  $("#searchStatus").textContent=`Найдено ${tracks.length}. ${source==="all"?"iTunes + YouTube + VK":source.toUpperCase()} • ${vkMsg}`;
+  const sources = ['iTunes', 'YouTube', 'VK'].filter((_,i)=>[a,b,c][i].length);
+  $("#searchStatus").textContent=`Найдено ${tracks.length}. Источники: ${sources.join(' + ') || 'нет'}`;
  }catch(e){
   $(target).innerHTML="<div class='empty-state'>Ошибка поиска. Проверь настройки API.</div>";
  }
 }
 function playById(id){
- const t=[...tracks,...favs].find(x=>String(x.id||x.item_id)===String(id));if(!t)return;
- if(t.source==="YouTube"){window.open(t.url,"_blank","noopener");toast("YouTube открылся в новой вкладке");return}
- audio.src=t.url;$("#playerTitle").textContent=t.title;$("#playerArtist").textContent=t.artist;$("#playerCover").innerHTML=img(t.artwork);
- audio.play().catch(()=>{});$("#playBtn").textContent="Ⅱ";saveHistory(t);queue=tracks;queueIndex=queue.findIndex(x=>x.id===t.id);
+ const t=[...tracks,...favs,...history].find(x=>String(x.id||x.item_id)===String(id));if(!t)return;
+ currentTrackId = String(t.id || t.item_id);
+ currentSource = t.source;
+ 
+ if(t.source==="YouTube" || t.source==="VK"){
+   // Try to play directly if URL is available
+   if(t.url && t.url.startsWith('http')){
+     audio.src=t.url;
+     $("#playerTitle").textContent=t.title;
+     $("#playerArtist").textContent=t.artist;
+     $("#playerCover").innerHTML=img(t.artwork);
+     audio.play().catch(()=>{
+       window.open(t.url,"_blank","noopener");
+       toast("Открыто в новой вкладке");
+     });
+   } else {
+     window.open(t.url,"_blank","noopener");
+     toast("Открыто в новой вкладке");
+   }
+   return;
+ }
+ 
+ if(t.source==="Radio"){
+   audio.src=t.url;
+   $("#playerTitle").textContent=t.title;
+   $("#playerArtist").textContent=t.artist || "Live Radio";
+   $("#playerCover").textContent="◉";
+   audio.play().catch(()=>toast("Нажми Play для запуска"));
+   saveHistory(t);
+   updatePlayButtons();
+   return;
+ }
+ 
+ audio.src=t.url;
+ $("#playerTitle").textContent=t.title;
+ $("#playerArtist").textContent=t.artist;
+ $("#playerCover").innerHTML=img(t.artwork);
+ audio.play().catch(()=>{});
+ saveHistory(t);
+ queue=tracks;
+ queueIndex=queue.findIndex(x=>x.id===t.id);
+ updatePlayButtons();
 }
-$("#playBtn").onclick=()=>{if(!audio.src)return;if(audio.paused){audio.play();$("#playBtn").textContent="Ⅱ"}else{audio.pause();$("#playBtn").textContent="▶"}};
-$("#nextBtn").onclick=()=>{if(queue.length){queueIndex=(queueIndex+1)%queue.length;playById(queue[queueIndex].id)}};
-$("#prevBtn").onclick=()=>{if(queue.length){queueIndex=(queueIndex-1+queue.length)%queue.length;playById(queue[queueIndex].id)}};
-audio.onended=()=>$("#playBtn").textContent="▶";
-audio.ontimeupdate=()=>{$("#progress").value=audio.duration?audio.currentTime/audio.duration*100:0;$("#currentTime").textContent=fmt(audio.currentTime)}
-$("#progress").oninput=e=>{if(audio.duration)audio.currentTime=e.target.value/100*audio.duration}
+
+function updatePlayButtons(){
+  document.querySelectorAll('[data-play]').forEach(btn => {
+    const id = btn.dataset.play;
+    const isPlaying = currentTrackId === id && !audio.paused;
+    btn.textContent = isPlaying ? '⏸' : '▶';
+    btn.classList.toggle('playing', isPlaying);
+  });
+}
+
+$("#playBtn").onclick=()=>{
+ if(!audio.src)return;
+ if(audio.paused){
+   audio.play();
+   $("#playBtn").textContent="Ⅱ";
+ } else {
+   audio.pause();
+   $("#playBtn").textContent="▶";
+ }
+ updatePlayButtons();
+};
+
+$("#nextBtn").onclick=()=>{
+ if(queue.length){
+   queueIndex=(queueIndex+1)%queue.length;
+   playById(queue[queueIndex].id);
+ }
+};
+
+$("#prevBtn").onclick=()=>{
+ if(queue.length){
+   queueIndex=(queueIndex-1+queue.length)%queue.length;
+   playById(queue[queueIndex].id);
+ }
+};
+
+audio.onplay = () => {
+  $("#playBtn").textContent="Ⅱ";
+  updatePlayButtons();
+};
+audio.onpause = () => {
+  $("#playBtn").textContent="▶";
+  updatePlayButtons();
+};
+audio.onended=()=>{
+  $("#playBtn").textContent="▶";
+  updatePlayButtons();
+};
+audio.ontimeupdate=()=>{
+  $("#progress").value=audio.duration?audio.currentTime/audio.duration*100:0;
+  $("#currentTime").textContent=fmt(audio.currentTime);
+}
+$("#progress").oninput=e=>{
+ if(audio.duration)audio.currentTime=e.target.value/100*audio.duration;
+}
 function fmt(n){n=Math.floor(n||0);return `${Math.floor(n/60)}:${String(n%60).padStart(2,"0")}`}
 
-function show(v){$$(".view").forEach(x=>x.classList.add("hidden"));$(`#${v}View`).classList.remove("hidden");$$(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.view===v))}
+function show(v){
+ $$(".view").forEach(x=>x.classList.add("hidden"));
+ $(`#${v}View`).classList.remove("hidden");
+ $$(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.view===v));
+ // Close mobile menu
+ document.querySelector('.sidebar').classList.remove('open');
+}
 $$(".nav-item").forEach(b=>b.onclick=()=>show(b.dataset.view));
+
+// Mobile menu toggle
+const mobileMenu = document.getElementById("mobileMenu");
+const sidebar = document.querySelector(".sidebar");
+mobileMenu.onclick = (e) => {
+  e.stopPropagation();
+  sidebar.classList.toggle("open");
+};
+document.addEventListener('click', (e) => {
+  if(window.innerWidth <= 650 && sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== mobileMenu) {
+    sidebar.classList.remove('open');
+  }
+});
+
 $("#searchBtn").onclick=()=>{show("search");searchAll($("#searchInput").value,"#searchResults")};
 $("#searchInput").onkeydown=e=>{if(e.key==="Enter"){$("#searchBtn").click()}};
 $("#heroSearch").onclick=()=>{$("#searchInput").focus();show("search")};
 $("#discoverBtn").onclick=()=>searchAll("The Weeknd","#homeResults");
-$("#mobileMenu").onclick=()=>$(".sidebar").classList.toggle("open");
 $("#themeBtn").onclick=()=>{document.body.classList.toggle("light");localStorage.setItem("mw_theme",document.body.classList.contains("light")?"light":"dark")};
 if(localStorage.getItem("mw_theme")==="light")document.body.classList.add("light");
 
@@ -148,11 +294,34 @@ async function searchRadio(q=""){
  el.querySelectorAll("[data-radio]").forEach(b=>b.onclick=()=>playRadio(a.find(s=>s.stationuuid===b.dataset.radio)));
  }catch(e){el.innerHTML="<div class='empty-state'>Радио API недоступно.</div>"}
 }
-function playRadio(s){audio.src=s.url_resolved||s.url;$("#playerTitle").textContent=s.name;$("#playerArtist").textContent=`${s.country||"World"} • Live radio`;$("#playerCover").textContent="◉";audio.play().catch(()=>toast("Нажми Play для запуска"))}
-$("#radioBtn").onclick=()=>searchRadio($("#radioSearch").value);$("#radioSearch").onkeydown=e=>{if(e.key==="Enter")$("#radioBtn").click()};
+function playRadio(s){
+ const radioTrack = {
+   id: 'radio_' + s.stationuuid,
+   title: s.name,
+   artist: s.country || 'World',
+   artwork: s.favicon || '',
+   url: s.url_resolved || s.url,
+   source: 'Radio'
+ };
+ playById(radioTrack.id);
+ // Add to tracks for queue
+ if(!tracks.find(t => t.id === radioTrack.id)) {
+   tracks.push(radioTrack);
+ }
+}
+$("#radioBtn").onclick=()=>searchRadio($("#radioSearch").value);
+$("#radioSearch").onkeydown=e=>{if(e.key==="Enter")$("#radioBtn").click()};
 
-function renderFavs(){const el=$("#favoriteResults");el.innerHTML=favs.length?favs.map(x=>row({...x,id:x.item_id})).join(""):"<div class='empty-state'>Избранное пусто.</div>";bind(el)}
-function renderHistory(){const el=$("#historyResults");el.innerHTML=history.length?history.map(x=>row({...x,id:x.item_id})).join(""):"<div class='empty-state'>История пока пустая.</div>";bind(el)}
+function renderFavs(){
+ const el=$("#favoriteResults");
+ el.innerHTML=favs.length?favs.map(x=>row({...x,id:x.item_id,source:x.source||'iTunes'})).join(""):"<div class='empty-state'>Избранное пусто.</div>";
+ bind(el);
+}
+function renderHistory(){
+ const el=$("#historyResults");
+ el.innerHTML=history.length?history.map(x=>row({...x,id:x.item_id,source:x.source||'iTunes'})).join(""):"<div class='empty-state'>История пока пустая.</div>";
+ bind(el);
+}
 
 async function spotifyLogin(){
  if(!spotifyReady()){toast("Сначала укажи Spotify Client ID в config.js");return}
@@ -171,14 +340,15 @@ async function spotifyCallback(){
  const j=await r.json();if(j.access_token){localStorage.setItem("spotify_token",j.access_token);history.replaceState({},document.title,location.pathname);toast("Spotify подключён")}
 }
 $("#spotifyBtn")?.addEventListener("click",spotifyLogin);
-function renderAccount(){if($("#accountStatus"))$("#accountStatus").textContent=sb&&user?"Аккаунт создан автоматически":"Локальный режим"}
+function renderAccount(){
+ if($("#accountStatus"))$("#accountStatus").textContent=sb&&user?"Аккаунт создан автоматически":"Локальный режим";
+}
 async function createPlaylist(){
  if(!sb||!user){toast("Для облачных плейлистов настрой Supabase");return}
  const name=prompt("Название плейлиста:","Мой плейлист");if(!name)return;
  await sb.from("playlists").insert({user_id:user.id,name});toast("Плейлист создан")
 }
 $("#newPlaylistBtn")?.addEventListener("click",createPlaylist);
-
 
 const savedVolume=Number(localStorage.getItem("mw_volume")||80);
 audio.volume=savedVolume/100;
@@ -195,7 +365,10 @@ async function boot(){
  await spotifyCallback(); await initCloud(); renderAccount();
  if(!favs.length) favs=JSON.parse(localStorage.getItem("mw_favs")||"[]");
  if(!history.length) history=JSON.parse(localStorage.getItem("mw_history")||"[]");
- searchAll("The Weeknd","#homeResults");searchRadio("");renderFavs();renderHistory();
+ searchAll("The Weeknd","#homeResults");
+ searchRadio("");
+ renderFavs();
+ renderHistory();
 }
 boot();
 
