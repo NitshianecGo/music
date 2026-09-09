@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MusicWave — музыка и радио</title>
+  <meta name="description" content="Современный музыкальный веб-плеер с поиском музыки и радио.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-dot"></span>MusicWave</div>
+      <nav>
+        <button class="nav-item active" data-view="home">⌂ <span>Главная</span></button>
+        <button class="nav-item" data-view="search">⌕ <span>Поиск</span></button>
+        <button class="nav-item" data-view="radio">◉ <span>Радио</span></button>
+        <button class="nav-item" data-view="favorites">♡ <span>Избранное</span></button>
+      </nav>
+      <div class="side-note">
+        <div>Твоя музыка.</div>
+        <div>Без лишних кнопок.</div>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu">☰</button>
+        <div class="searchbox">
+          <span>⌕</span>
+          <input id="searchInput" placeholder="Найти исполнителя, трек или альбом..." autocomplete="off">
+          <button id="searchBtn">Найти</button>
+        </div>
+        <button class="theme-btn" id="themeBtn" title="Тема">☾</button>
+      </header>
+
+      <section id="homeView" class="view">
+        <div class="hero">
+          <div>
+            <span class="eyebrow">MUSIC • RADIO • DISCOVERY</span>
+            <h1>Музыка, которую<br><em>хочется слушать.</em></h1>
+            <p>Ищи треки и артистов, включай превью и находи интернет-радиостанции со всего мира.</p>
+            <button class="primary" id="heroSearch">Начать поиск <span>→</span></button>
+          </div>
+          <div class="hero-art">
+            <div class="vinyl"><div class="vinyl-center"></div></div>
+            <div class="equalizer"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+
+        <div class="section-head"><h2>Популярное сейчас</h2><button class="text-btn" id="discoverBtn">Обновить</button></div>
+        <div id="homeResults" class="track-grid"></div>
+      </section>
+
+      <section id="searchView" class="view hidden">
+        <div class="page-title"><span class="eyebrow">SEARCH</span><h1>Результаты</h1><p id="searchStatus">Введи запрос сверху.</p></div>
+        <div id="searchResults" class="track-list empty-state">Поиск по музыкальному каталогу.</div>
+      </section>
+
+      <section id="radioView" class="view hidden">
+        <div class="page-title"><span class="eyebrow">RADIO</span><h1>Радио</h1><p>Тысячи станций из разных стран. Человечество всё-таки иногда делает полезные вещи.</p></div>
+        <div class="radio-tools">
+          <input id="radioSearch" placeholder="Найти радиостанцию или жанр...">
+          <button class="primary" id="radioBtn">Найти радио</button>
+        </div>
+        <div id="radioResults" class="radio-grid"></div>
+      </section>
+
+      <section id="favoritesView" class="view hidden">
+        <div class="page-title"><span class="eyebrow">YOUR LIBRARY</span><h1>Избранное</h1><p>Сохранённые треки и станции на этом устройстве.</p></div>
+        <div id="favoriteResults" class="track-list empty-state">Здесь пока пусто.</div>
+      </section>
+    </main>
+
+    <div class="player" id="player">
+      <div class="now">
+        <div class="cover mini" id="playerCover">♪</div>
+        <div><strong id="playerTitle">Ничего не играет</strong><span id="playerArtist">Выбери трек</span></div>
+      </div>
+      <div class="controls">
+        <button id="prevBtn">◀</button>
+        <button class="play" id="playBtn">▶</button>
+        <button id="nextBtn">▶</button>
+      </div>
+      <div class="progress-wrap">
+        <span id="currentTime">0:00</span>
+        <input id="progress" type="range" min="0" max="100" value="0">
+        <span id="duration">0:30</span>
+      </div>
+      <audio id="audio"></audio>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
