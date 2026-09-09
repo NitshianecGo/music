@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>MusicWave — музыка и радио</title>
-  <meta name="description" content="Современный музыкальный веб-плеер с поиском музыки и радио.">
+  <meta name="description" content="MusicWave — музыка, радио, поиск и плейлисты."><meta name="theme-color" content="#090a0f"><link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,6 +19,8 @@
         <button class="nav-item" data-view="search">⌕ <span>Поиск</span></button>
         <button class="nav-item" data-view="radio">◉ <span>Радио</span></button>
         <button class="nav-item" data-view="favorites">♡ <span>Избранное</span></button>
+        <button class="nav-item" data-view="history">↺ <span>История</span></button>
+        <button class="nav-item" data-view="account">◉ <span>Аккаунт</span></button>
       </nav>
       <div class="side-note">
         <div>Твоя музыка.</div>
@@ -32,7 +34,12 @@
         <div class="searchbox">
           <span>⌕</span>
           <input id="searchInput" placeholder="Найти исполнителя, трек или альбом..." autocomplete="off">
-          <button id="searchBtn">Найти</button>
+          <select id="sourceSelect" title="Источник">
+            <option value="all">Все</option>
+            <option value="itunes">Apple Music</option>
+            <option value="youtube">YouTube</option>
+            <option value="vk">VK</option>
+          </select><button id="searchBtn">Найти</button>
         </div>
         <button class="theme-btn" id="themeBtn" title="Тема">☾</button>
       </header>
@@ -69,6 +76,10 @@
         <div id="radioResults" class="radio-grid"></div>
       </section>
 
+      <section id="historyView" class="view hidden"><div class="page-title"><span class="eyebrow">RECENT</span><h1>История</h1><p>Недавно прослушанное.</p></div><div id="historyResults" class="track-list empty-state">История пока пустая.</div></section>
+
+      <section id="accountView" class="view hidden"><div class="page-title"><span class="eyebrow">ACCOUNT</span><h1>Твой аккаунт</h1><p id="accountStatus">Создаём аккаунт автоматически…</p></div><div class="radio-tools"><button class="primary" id="spotifyBtn">Подключить Spotify</button><button class="primary" id="newPlaylistBtn">+ Плейлист</button></div><div class="empty-state">Регистрация не нужна. MusicWave создаёт анонимный аккаунт автоматически. Для переноса данных между устройствами позже можно добавить вход через Google или Apple.</div></section>
+
       <section id="favoritesView" class="view hidden">
         <div class="page-title"><span class="eyebrow">YOUR LIBRARY</span><h1>Избранное</h1><p>Сохранённые треки и станции на этом устройстве.</p></div>
         <div id="favoriteResults" class="track-list empty-state">Здесь пока пусто.</div>
@@ -85,6 +96,7 @@
         <button class="play" id="playBtn">▶</button>
         <button id="nextBtn">▶</button>
       </div>
+      <div class="volume"><span id="volumeIcon">🔊</span><input id="volume" type="range" min="0" max="100" value="80" title="Громкость"><span id="volumeValue">80%</span></div>
       <div class="progress-wrap">
         <span id="currentTime">0:00</span>
         <input id="progress" type="range" min="0" max="100" value="0">
@@ -94,6 +106,6 @@
     </div>
   </div>
   <div id="toast"></div>
-  <script src="app.js"></script>
+  <script src="config.js"></script><script src="app.js"></script>
 </body>
 </html>

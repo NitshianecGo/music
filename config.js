@@ -1,0 +1,1 @@
+window.MUSICWAVE_CONFIG = window.MUSICWAVE_CONFIG || {};

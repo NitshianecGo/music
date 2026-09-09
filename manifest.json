@@ -1,0 +1,9 @@
+{
+  "name":"MusicWave",
+  "short_name":"MusicWave",
+  "start_url":".",
+  "display":"standalone",
+  "background_color":"#090a0f",
+  "theme_color":"#090a0f",
+  "description":"Музыка, радио, поиск и плейлисты"
+}
