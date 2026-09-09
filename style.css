@@ -25,3 +25,67 @@
  .controls{gap:8px}
  .controls button{font-size:12px}
 }
+/* Heart animation */
+@keyframes heartFloat {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5) translateY(-50px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0.5) translateY(-120px);
+    opacity: 0;
+  }
+}
+
+.fav-btn.active {
+  color: #ff3366;
+  animation: heartPulse 0.3s ease-in-out;
+}
+
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.play-btn.playing, .icon-btn.play.playing {
+  color: #64e7c5;
+}
+
+/* Fix for sidebar mobile */
+@media(max-width:650px){
+  .sidebar {
+    position: fixed;
+    left: -220px;
+    top: 0;
+    bottom: 0;
+    width: 220px;
+    transition: left 0.3s ease-in-out;
+    z-index: 100;
+    background: var(--bg);
+  }
+  .sidebar.open {
+    left: 0;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+  }
+  main {
+    margin-left: 0;
+  }
+  .mobile-menu {
+    display: block;
+    z-index: 101;
+  }
+  /* Overlay for mobile */
+  .sidebar.open + main::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+    pointer-events: none;
+  }
+}
